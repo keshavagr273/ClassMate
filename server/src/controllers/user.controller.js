@@ -53,6 +53,12 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     extractRegistrationDetails(email);
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Check if user with same registration number already exists
+  const existingUserWithReg = await User.findOne({ where: { registration_number: registrationNumber } });
+  if (existingUserWithReg) {
+    return next(new ApiError("This user already exists. Please check your email or use a different email.", 400));
+  }
+
   // Debug log for registration values
   console.log({ email, password, hashedPassword });
 

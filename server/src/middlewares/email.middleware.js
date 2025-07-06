@@ -19,8 +19,8 @@ const emailMiddleware = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "Invalid email format");
     }
 
-    if (!email.toLowerCase().endsWith('@mnnit.ac.in')) {
-        throw new ApiError(403, "Access denied. Only MNNIT students can access this service");
+    if (!email.toLowerCase().endsWith('@iiitsonepat.ac.in')) {
+        throw new ApiError(403, "Access denied. Only IIIT Sonepat students can access this service");
     }
 
     req.validatedEmail = email.toLowerCase();

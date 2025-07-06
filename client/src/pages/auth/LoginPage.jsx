@@ -41,6 +41,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (authError && !loading) {
+      console.log("Auth error received:", authError);
       if (toastIdRef.current) toast.dismiss(toastIdRef.current);
       toastIdRef.current = toast.error(authError, {
         position: "top-right",
@@ -54,19 +55,26 @@ const LoginPage = () => {
 
   const handleFormSubmit = async (e, type) => {
     e.preventDefault();
-    dispatch(clearError());
-    if (toastIdRef.current) toast.dismiss(toastIdRef.current);
-    const email = e.target.elements.email?.value;
-    const password = e.target.elements.password?.value;
-    if (!email) {
-      toast.error("Please enter your email.");
-      return;
-    }
-    if (!password) {
-      toast.error("Please enter your password.");
-      return;
-    }
+    
     try {
+      // Clear any previous errors
+      dispatch(clearError());
+      if (toastIdRef.current) toast.dismiss(toastIdRef.current);
+      
+      const email = e.target.elements.email?.value;
+      const password = e.target.elements.password?.value;
+      
+      // Validate inputs
+      if (!email) {
+        toast.error("Please enter your email.");
+        return;
+      }
+      if (!password) {
+        toast.error("Please enter your password.");
+        return;
+      }
+      
+      // Handle login/signup
       if (type === "login") {
         await dispatch(handleSignIn({ email, password })).unwrap();
       } else if (type === "signup") {
@@ -75,7 +83,9 @@ const LoginPage = () => {
         setTab("login");
       }
     } catch (err) {
-      // error handled by toast
+      console.error("Form submission error:", err);
+      // The error is already handled by the Redux slice and displayed via toast
+      // This catch block prevents the app from crashing
     }
   };
 
@@ -116,6 +126,11 @@ const LoginPage = () => {
                   required
                   autoComplete={tab === "signup" ? "email" : "username"}
                 />
+                {tab === "signup" && (
+                  <p className="text-[#92adc9] text-sm font-normal leading-normal mt-2">
+                    EMAIL FORMAT: NAME.REGNO@iiitsonepat.ac.in
+                  </p>
+                )}
               </label>
             </div>
             <div className="max-w-[480px] w-full px-4 py-3 mx-auto">

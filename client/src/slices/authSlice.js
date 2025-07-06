@@ -67,13 +67,26 @@ export const handleSignIn = createAsyncThunk(
 
       return user; // Return the user object on success
     } catch (error) {
+      console.error("Login error:", error);
+      
       // Provide specific user-friendly messages based on status or backend message
       if (error.response?.status === 403) {
         return rejectWithValue("Please verify your email before logging in.");
       }
+      
       if (error.response?.status === 401 || error.response?.status === 400) {
         return rejectWithValue("Invalid email or password.");
       }
+      
+      if (error.response?.status === 500) {
+        return rejectWithValue("Server error. Please try again later.");
+      }
+      
+      // Network or other errors
+      if (!error.response) {
+        return rejectWithValue("Network error. Please check your connection and try again.");
+      }
+      
       return rejectWithValue(
         error.response?.data?.message ||
           "Unable to sign in. Please try again later."
@@ -92,6 +105,30 @@ export const handleSignUp = createAsyncThunk(
       // Return data which might include a success message, but not user/auth state yet.
       return response.data;
     } catch (error) {
+      console.error("Signup error:", error);
+      
+      // Handle different types of errors
+      if (error.response?.status === 400) {
+        return rejectWithValue(
+          error.response?.data?.message || "Invalid signup data. Please check your information."
+        );
+      }
+      
+      if (error.response?.status === 403) {
+        return rejectWithValue(
+          error.response?.data?.message || "Access denied. Please check your email domain."
+        );
+      }
+      
+      if (error.response?.status === 500) {
+        return rejectWithValue("Server error. Please try again later.");
+      }
+      
+      // Network or other errors
+      if (!error.response) {
+        return rejectWithValue("Network error. Please check your connection and try again.");
+      }
+      
       return rejectWithValue(
         error.response?.data?.message || "Signup failed. Please try again."
       );
@@ -240,7 +277,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = null;
         state.roles = [];
-        state.isAuthenticated = true;
+        state.isAuthenticated = false;
         state.error = null;
         // Success toast (e.g., "Verification email sent") is handled in the component
       })
