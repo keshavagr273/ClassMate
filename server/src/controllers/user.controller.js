@@ -44,9 +44,9 @@ export const registerUser = asyncHandler(async (req, res, next) => {
   const existingUser = await User.findOne({ where: { email } });
   if (existingUser) {
     if (typeof next === "function") {
-      return next(new ApiError("User already exists", 400));
+      return next(new ApiError("You already have an account. Please log in.", 400));
     }
-    throw new ApiError("User already exists", 400);
+    throw new ApiError("You already have an account. Please log in.", 400);
   }
 
   const { registrationNumber, graduationYear } =
@@ -91,9 +91,9 @@ export const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ where: { email }, include: Role });
-  if (!user) return next(new ApiError("Invalid email or password", 400));
+  if (!user) return next(new ApiError("Email or password is wrong, re-enter.", 400));
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return next(new ApiError("Invalid email or password", 400));
+  if (!isMatch) return next(new ApiError("Email or password is wrong, re-enter.", 400));
 
   const roles = user.Roles.map((role) => role.role_name);
   const token = jwt.sign(
