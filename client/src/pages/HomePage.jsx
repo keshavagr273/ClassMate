@@ -15,6 +15,13 @@ import SpotlightCard from "../components/SpotlightCard";
 import { motion } from "framer-motion";
 import HeroSection from "../components/HeroSection";
 
+// Import images properly for both development and production
+import chatImage from "../public/assets/images/chat.jpg";
+import hackathonImage from "../public/assets/images/hackathon.jpeg";
+import festImage from "../public/assets/images/fest.jpeg";
+import workshopImage from "../public/assets/images/workshop.jpg";
+import debateImage from "../public/assets/images/debate.jpg";
+
 const userAvatar = "https://lh3.googleusercontent.com/aida-public/AB6AXuB_Iw_su29HvXm8ug2L3NHlXyZ8GNbmTmgy0QQ6dgNbO2GvTy16jLFLsNS0Q0KTcNdb7TG_42wl0VUbou8Ya4L8gj6po2gqqBvSmC4kIkqb7RmpKoN88Y7gf2uLxNCsw6MOndWfHGC8lUnJ0iszvw5DxmqzqCYQgYSX20a2uzx4OYCHpQjbCsqY7T_Nl-5y2pbxwCsQ42uk29-KCmzm_aKmPLYq3Dwu94G3ACiyPXtUJUi4ZAfwzMrmiwbNzCl1nEc3KD9kdcPAxfA";
 
 const featureModules = [
@@ -65,7 +72,7 @@ const featureModules = [
 
 const spotlightData = [
   {
-    image: "/src/public/assets/images/chat.jpg",
+    image: chatImage,
     title: "Meet Aryan",
     subtitle: "Built a Campus Chat App from Scratch",
     description: "Aryan created a real-time chat app used by 300+ students in IIIT Sonepat.",
@@ -79,7 +86,7 @@ const spotlightData = [
     link: "/spotlight/sanya-paper"
   },
   {
-    image: "/src/public/assets/images/hackathon.jpeg",
+    image: hackathonImage,
     title: "IEEE Hackathon – 2025",
     subtitle: "Winners: Smart Campus Automation",
     description: "Team of 4 won 1st place by building IoT-based smart alert system for campus safety.",
@@ -136,14 +143,14 @@ const HomePage = () => {
             {/* Quick Links */}
             <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Quick Links</h2>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-5 p-4">
-              <a href="/src/public/calendar.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
+              <a href="/calendar.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
                 {/* Calendar Icon */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" fill="currentColor" viewBox="0 0 256 256">
                   <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-96-88v64a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm59.16,30.45L152,176h16a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136,23.76,23.76,0,0,1,171.16,150.45Z"></path>
                 </svg>
                 <h2 className="text-white text-xl font-bold leading-tight">Academic Calendar</h2>
               </a>
-              <a href="/src/public/contact.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
+              <a href="/contact.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
                 {/* Phone Icon */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" fill="currentColor" viewBox="0 0 256 256">
                   <path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z"></path>
@@ -159,7 +166,7 @@ const HomePage = () => {
                 </svg>
                 <h2 className="text-white text-xl font-bold leading-tight">Payment Portal</h2>
               </a>
-              <a href="/src/public/timetable.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
+              <a href="/timetable.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
                 {/* Timetable Icon */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" fill="currentColor" viewBox="0 0 24 24">
                   <rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
@@ -179,7 +186,7 @@ const HomePage = () => {
                 <div className="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40">
                   <div
                     className="w-full bg-center bg-no-repeat bg-cover rounded-lg flex flex-col"
-                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url('/src/public/assets/images/fest.jpeg')` }}
+                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url(${festImage})` }}
                   ></div>
                   <div>
                     <p className="text-white text-lg md:text-2xl font-bold leading-tight">Agnito 2026</p>
@@ -191,7 +198,7 @@ const HomePage = () => {
                 <div className="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40">
                   <div
                     className="w-full bg-center bg-no-repeat bg-cover rounded-lg flex flex-col"
-                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url('/src/public/assets/images/workshop.jpg')` }}
+                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url(${workshopImage})` }}
                   ></div>
                   <div>
                     <p className="text-white text-lg md:text-2xl font-bold leading-tight">AI Workshop</p>
@@ -203,7 +210,7 @@ const HomePage = () => {
                 <div className="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40">
                   <div
                     className="w-full bg-center bg-no-repeat bg-cover rounded-lg flex flex-col"
-                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url('/src/public/assets/images/debate.jpg')` }}
+                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url(${debateImage})` }}
                   ></div>
                   <div>
                     <p className="text-white text-lg md:text-2xl font-bold leading-tight">Inter-College Debate Competition</p>
