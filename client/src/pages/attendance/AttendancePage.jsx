@@ -324,12 +324,26 @@ const AttendancePage = () => {
           <h1 className="text-3xl font-bold text-white">Attendance Dashboard</h1>
           <p className="text-sm text-gray-400">Track your attendance across all your subjects.</p>
         </div>
+        {/* Subject Breakdown Section (enables subject selection) */}
+        <SubjectBreakdownSection
+          themeStyles={themeStyles}
+          errorSubjectPercentages={errorSubjectPercentages}
+          onRetrySubjectWise={handleRetrySubjectWise}
+          loadingSubjectPercentages={loadingSubjectPercentages}
+          subjectPercentageList={subjectPercentageList}
+          userEnrollments={userEnrollments}
+          selectedSubjectId={selectedSubjectId}
+          unrollingSubjectId={unrollingSubjectId}
+          onSubjectSelect={handleSubjectChangeAndSelect}
+          onUnenrollSubject={handleUnenroll}
+          unenrollLoading={unenrollLoading}
+        />
         {/* Subject Overview */}
         <div className="bg-[#121926] rounded-xl shadow-lg p-6 flex flex-col sm:flex-row justify-between items-center mb-8">
           <div>
             <h2 className="text-md font-semibold text-white">Subject Overview</h2>
             <p className="text-sm mt-2 text-gray-300">{selectedSubjectForDetails?.name}<br /><span className="text-xs text-gray-500">Attendance Rate: {percentageData ? percentageData.percentage.toFixed(1) : '0.0'}%</span></p>
-            <button className="mt-3 bg-white text-black px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition">View Details</button>
+            <button className="mt-3 bg-white text-black px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition" aria-label="View Subject Details">View Details</button>
           </div>
           <div>
             <img src="https://assets-global.website-files.com/62a8b2e9ab1c7d7a2e9e7a5f/637a5a53bb97a1f7ea1d9c8c_Read-Book.png" className="w-32 rounded-md mt-6 sm:mt-0" alt="Book" />
@@ -337,7 +351,7 @@ const AttendancePage = () => {
         </div>
         {/* Add Attendance Button */}
         <div className="flex justify-end mb-6">
-          <button className="bg-sky-200 text-black font-semibold px-5 py-2 rounded-md shadow hover:bg-sky-300 transition" onClick={() => selectedSubjectId && openAttendanceModal("create", null, new Date())} disabled={!selectedSubjectId}>Add Attendance</button>
+          <button className="bg-sky-200 text-black font-semibold px-5 py-2 rounded-md shadow hover:bg-sky-300 transition" onClick={() => selectedSubjectId && openAttendanceModal("create", null, new Date())} disabled={!selectedSubjectId} aria-label="Add Attendance">Add Attendance</button>
         </div>
         {/* Divider */}
         <hr className="border-gray-800 mb-6" />
@@ -355,8 +369,10 @@ const AttendancePage = () => {
               maxDate={new Date()}
               className="bg-gray-900 text-gray-300 border border-gray-700 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-400 w-[150px] text-center cursor-pointer"
               popperPlacement="bottom-start"
+              aria-label="Select attendance date"
+              placeholderText="YYYY-MM-DD"
             />
-            <button className="bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2 rounded-md transition" onClick={() => openAttendanceModal('create', null, selectedDate)} disabled={isDetailedActionDisabled}>Mark Attendance</button>
+            <button className="bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2 rounded-md transition" onClick={() => openAttendanceModal('create', null, selectedDate)} disabled={isDetailedActionDisabled} aria-label="Mark Attendance">Mark Attendance</button>
           </div>
         </div>
         {/* Attendance Summary & Records */}
@@ -392,7 +408,7 @@ const AttendancePage = () => {
                 <div key={record.id} className="flex items-center justify-between bg-gray-900 border border-gray-700 px-4 py-3 rounded-lg text-sm text-white mb-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${record.status === 'Present' ? 'bg-green-700 text-white' : 'bg-red-700 text-white'}`}>{record.status}</span>
                   <p className="text-gray-400">Marked at {record.markedAt ? format(new Date(record.markedAt), 'HH:mm') : ''}</p>
-                  <button title="Edit" onClick={() => openAttendanceModal('edit', record)}><MdEdit className="text-gray-400 hover:text-white" /></button>
+                  <button title="Edit Attendance Record" aria-label="Edit Attendance Record" onClick={() => openAttendanceModal('edit', record)}><MdEdit className="text-gray-400 hover:text-white" /></button>
                 </div>
               ))
             ) : (

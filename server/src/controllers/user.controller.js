@@ -99,12 +99,17 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     { expiresIn: "1h" }
   );
 
-  res.cookie("token", token, {
+  const isProduction = process.env.NODE_ENV === "production";
+  const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 60 * 60 * 1000,
-  });
+  };
+  if (isProduction) {
+    cookieOptions.domain = "classmate-o06h.onrender.com";
+  }
+  res.cookie("token", token, cookieOptions);
 
   console.log(`User ${email} logged in at ${getCurrentUTCDateTime()}`);
 

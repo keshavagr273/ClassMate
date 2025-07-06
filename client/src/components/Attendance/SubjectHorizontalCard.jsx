@@ -21,6 +21,7 @@ const SubjectHorizontalCard = ({
         <button
           className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 flex-row-reverse bg-[#2b3640] text-white text-sm font-medium leading-normal w-fit"
           onClick={onViewDetails}
+          aria-label="View Subject Details"
         >
           <span className="truncate">View Details</span>
         </button>

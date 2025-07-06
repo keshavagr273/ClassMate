@@ -31,6 +31,7 @@ const NoRecordsFound = ({
             ? "bg-gray-500 cursor-not-allowed opacity-70"
             : `bg-gradient-to-r ${themeStyles.buttonGradient} hover:brightness-110`
         }`}
+        aria-label="Mark attendance for this date"
       >
         <FiPlusCircle className="mr-1.5" /> Mark for this Date
       </button>

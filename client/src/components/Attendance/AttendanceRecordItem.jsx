@@ -44,6 +44,7 @@ const AttendanceRecordItem = ({
                     isActionDisabled ? "cursor-not-allowed opacity-50" : ""
                 }`}
                 title="Edit Attendance Status"
+                aria-label="Edit Attendance Status"
                 disabled={isActionDisabled}
             >
                 <FiEdit2 size={16} />

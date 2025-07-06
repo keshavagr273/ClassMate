@@ -66,6 +66,7 @@ const DetailedViewControls = ({
               ? "bg-gray-500 cursor-not-allowed opacity-70"
               : `bg-gradient-to-r ${themeStyles.buttonGradient} hover:brightness-110`
           }`}
+          aria-label={`Mark attendance for ${selectedSubject?.name} for ${todayDate}`}
         >
           {isActionDisabled && <FiLoader className="animate-spin mr-2" />}
           {!isActionDisabled && <FiPlusCircle className="mr-2" />}

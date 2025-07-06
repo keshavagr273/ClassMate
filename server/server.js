@@ -50,6 +50,7 @@ const corsOptions = {
   origin: [
     "http://localhost:5173",
     "https://classmate-frontend.onrender.com",
+    "https://class-matefrontend.vercel.app",
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -61,11 +62,21 @@ const corsOptions = {
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
+// Set X-Content-Type-Options header for all responses
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 
+// Set Cache-Control header for all API responses
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 
 // Test route
 app.get("/", (req, res) => {

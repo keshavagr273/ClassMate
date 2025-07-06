@@ -92,44 +92,46 @@ function NavBar() {
   ];
 
   return (
-    <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#2b3640] px-10 py-5">
-      <div className="flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-4 text-white">
-          <div className="size-16 flex items-center justify-center">
+    <header className="text-xs flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#2b3640] px-4 py-2">
+      <div className="flex items-center gap-4">
+        <Link to="/" className="flex items-center gap-2 text-white">
+          <div className="size-10 flex items-center justify-center">
             <LogoIcon />
           </div>
-          <h2 className="text-white text-4xl font-extrabold leading-tight tracking-[-0.015em]">ClassMate</h2>
+          <h2 className="text-white text-xs font-extrabold leading-tight tracking-[-0.015em]">ClassMate</h2>
         </Link>
-        <nav className="flex items-center gap-9">
+        <nav className="flex items-center gap-4">
           {navLinks.map(link => (
-            <Link key={link.name} to={link.path} className="text-white text-xl font-bold leading-normal">
+            <Link key={link.name} to={link.path} className="text-white text-xs font-bold leading-normal">
               {link.name}
             </Link>
           ))}
         </nav>
       </div>
-      <div className="flex flex-1 justify-end items-center gap-8">
-        <label className="flex flex-col min-w-40 !h-14 max-w-64">
+      <div className="flex flex-1 justify-end items-center gap-4">
+        <label className="flex flex-col min-w-32 !h-10 max-w-48">
           <div className="flex w-full flex-1 items-stretch rounded-xl h-full">
-            <div className="text-[#9eadbd] flex border-none bg-[#2b3640] items-center justify-center pl-4 rounded-l-xl border-r-0">
+            <div className="text-[#9eadbd] flex border-none bg-[#2b3640] items-center justify-center pl-2 rounded-l-xl border-r-0">
               <MagGlassIcon />
             </div>
             <input
               placeholder="Search"
-              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white text-2xl font-bold focus:outline-0 focus:ring-0 border-none bg-[#2b3640] focus:border-none h-full placeholder:text-[#9eadbd] px-4 rounded-l-none border-l-0 pl-2 leading-normal"
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white text-xs font-bold focus:outline-0 focus:ring-0 border-none bg-[#2b3640] focus:border-none h-full placeholder:text-[#9eadbd] px-2 rounded-l-none border-l-0 pl-1 leading-normal"
             />
           </div>
         </label>
         <div className="relative" ref={notificationPanelRef}>
             <button
               onClick={() => setNotificationOpen(prev => !prev)}
-              className="relative flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 w-12 bg-[#2b3640] text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5"
+              className="relative flex max-w-[240px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 w-8 bg-[#2b3640] text-white gap-1 text-xs font-bold leading-normal tracking-[0.015em] min-w-0 px-1.5"
+              aria-label="Show notifications"
+              title="Show notifications"
             >
               <div className="text-white">
                 <BellIcon />
               </div>
               {unreadCount > 0 && (
-                <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#1e2935]"></div>
+                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-[#1e2935]"></div>
               )}
             </button>
             <AnimatePresence>
@@ -145,12 +147,12 @@ function NavBar() {
         {isAuthenticated && user ? (
           <Link to="/profile">
             <div
-              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12"
+              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8"
               style={{ backgroundImage: `url(${user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=2960&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'})` }}
             ></div>
           </Link>
         ) : (
-          <Link to="/login" className="text-white text-2xl font-bold leading-normal">
+          <Link to="/login" className="text-white text-xs font-bold leading-normal">
             Login
           </Link>
         )}

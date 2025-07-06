@@ -91,6 +91,7 @@ const SubjectStatCard = ({
                 onClick={handleUnenroll}
                 disabled={isUnenrolling || unenrollLoading}
                 title={`Unenroll from ${enrollment.name}`}
+                aria-label={`Unenroll from ${enrollment.name}`}
                 className={`absolute top-2 right-2 p-1 rounded text-gray-500 hover:text-red-400 hover:bg-gray-700/50 transition-all duration-150 z-10
                                      ${
                                          isUnenrolling
