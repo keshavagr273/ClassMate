@@ -53,6 +53,9 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     extractRegistrationDetails(email);
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Debug log for registration values
+  console.log({ email, password, hashedPassword });
+
   const newUser = await User.create({
     email,
     password: hashedPassword,
