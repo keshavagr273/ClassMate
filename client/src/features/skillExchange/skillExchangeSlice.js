@@ -1,7 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api/skill-exchange', withCredentials: true });
+const api = axios.create({
+  baseURL: (import.meta.env.VITE_API_URL || '') + '/api/skill-exchange',
+  withCredentials: true
+});
 
 export const fetchSkills = createAsyncThunk('skillExchange/fetchSkills', async () => {
   const res = await api.get('/skills');

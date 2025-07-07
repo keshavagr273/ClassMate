@@ -39,7 +39,8 @@ export default function InternConnect() {
     setInternships([]);
     try {
       const payload = { ...filters, max_results: 12 };
-      const { data } = await axios.post('/api/internships/fetch', payload);
+      const apiBase = import.meta.env.VITE_API_URL || '';
+      const { data } = await axios.post(`${apiBase}/api/internships/fetch`, payload);
       setInternships(data.internships);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to fetch internships.');
