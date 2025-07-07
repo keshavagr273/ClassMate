@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL || '') + '/api/skill-exchange',
+  baseURL: (import.meta.env.VITE_API_URL || '') + '/skill-exchange',
   withCredentials: true
 });
 

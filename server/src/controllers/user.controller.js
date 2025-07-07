@@ -7,6 +7,8 @@ import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { OAuth2Client } from "google-auth-library";
 import dotenv from "dotenv";
+import Subject from "../models/subject.model.js";
+import UserSubject from "../models/user_subject.model.js";
 dotenv.config();
 
 console.log(process.env.CLIENT_URL)
@@ -67,6 +69,30 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     registration_number: registrationNumber,
     graduation_year: graduationYear,
   });
+
+  // Ensure all default subjects exist with unique codes
+  const defaultSubjects = [
+    "Data Structure",
+    "Operating System",
+    "Mathematics",
+    "Computer Networks",
+    "Compiler Design"
+  ];
+  const subjectRecords = [];
+  for (const subjectName of defaultSubjects) {
+    const subjectCode = subjectName.toLowerCase().replace(/\s+/g, '_');
+    const [subject] = await Subject.findOrCreate({
+      where: { code: subjectCode },
+      defaults: { name: subjectName, code: subjectCode }
+    });
+    subjectRecords.push(subject);
+  }
+  // Assign all subjects to the new user
+  for (const subject of subjectRecords) {
+    await UserSubject.findOrCreate({
+      where: { userId: newUser.id, subjectId: subject.id }
+    });
+  }
 
   // Assign default role to new user
   const userRole = await Role.findOne({ where: { role_name: "user" } });

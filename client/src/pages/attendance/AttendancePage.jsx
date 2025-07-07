@@ -9,6 +9,7 @@ import { FiAlertTriangle, FiBookOpen, FiEdit2 } from "react-icons/fi";
 import { MdMenuBook, MdAnalytics, MdEvent, MdEdit } from "react-icons/md";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import bookImage from "../../public/assets/images/Book.jpg";
 
 // --- Redux Actions ---
 import {
@@ -346,7 +347,7 @@ const AttendancePage = () => {
             <button className="mt-3 bg-white text-black px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition" aria-label="View Subject Details">View Details</button>
           </div>
           <div>
-            <img src="https://assets-global.website-files.com/62a8b2e9ab1c7d7a2e9e7a5f/637a5a53bb97a1f7ea1d9c8c_Read-Book.png" className="w-32 rounded-md mt-6 sm:mt-0" alt="Book" />
+            <img src={bookImage} className="w-32 rounded-md mt-6 sm:mt-0" alt="Book" />
           </div>
         </div>
         {/* Add Attendance Button */}
