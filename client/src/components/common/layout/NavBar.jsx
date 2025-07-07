@@ -89,6 +89,7 @@ function NavBar() {
     { name: 'CampusBazaar', path: '/marketplace' },
     { name: 'FoundIt!', path: '/lost-found' },
     { name: 'RideLoop', path: '/rides' },
+    { name: 'InternConnect', path: '/intern-connect' },
   ];
 
   return (

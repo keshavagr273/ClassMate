@@ -14,7 +14,7 @@ import filterInputMiddleware from "../middlewares/filter.middleware.js";
 const upload = multer({ dest: "./public/temp" });
 
 
-router.post("/lost-items", upload.single("image"),authMiddleware, createLostItem);
+router.post("/lost-items", upload.single("image"), authMiddleware, filterInputMiddleware, createLostItem);
 router.put(
   "/lost-items/:id",
   upload.single("image"),

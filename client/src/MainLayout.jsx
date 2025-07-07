@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import LoadingScreen from "./components/LoadingScreen"; // adjust import as needed
+import LoadingScreen from "./components/common/loading";
 import { useAuth } from "./contexts/AuthContext"; // adjust import as needed
 
 export default function MainLayout({ children }) {

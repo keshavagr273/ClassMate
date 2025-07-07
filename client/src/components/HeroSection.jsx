@@ -1,12 +1,13 @@
 import React from "react";
 import { motion } from "framer-motion";
+import collegeImage from '../public/assets/images/college.jpg';
 
 const HeroSection = ({ onExploreClick }) => {
   return (
     <div
       className="relative min-h-[480px] w-full max-w-5xl mx-auto bg-cover bg-center bg-no-repeat rounded-lg shadow-lg flex items-center justify-center"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('/src/public/assets/images/college.jpg')`,
+        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${collegeImage})`,
         backgroundBlendMode: "darken"
       }}
     >

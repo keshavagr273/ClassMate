@@ -13,7 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import Profile from "../../components/ProfilePage/profileCard";
-import LoadingScreen from "../../components/LoadingScreen";
+import LoadingScreen from "../../components/common/loading";
 import { useDispatch, useSelector } from "react-redux";
 import {
   updateUser,
