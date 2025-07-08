@@ -27,7 +27,9 @@ api.interceptors.response.use(
 
 export const fetchAttendanceRecords = createAsyncThunk(
   "attendance/fetchRecords",
-  async (filters, { rejectWithValue }) => {
+  async (filters, { getState, rejectWithValue }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     if (!filters.date || !/^\d{4}-\d{2}-\d{2}$/.test(filters.date)) {
       console.error(
         "Invalid or missing date format in fetchAttendanceRecords filter:",
@@ -48,6 +50,8 @@ export const fetchAttendanceRecords = createAsyncThunk(
 export const updateAttendance = createAsyncThunk(
   "attendance/update",
   async ({ recordId, status }, { rejectWithValue, dispatch, getState }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     try {
       const response = await api.put(`/attendance/${recordId}`, { status });
       toast.success(response.data.message || "Attendance updated!");
@@ -92,6 +96,8 @@ export const updateAttendance = createAsyncThunk(
 export const markAttendance = createAsyncThunk(
   "attendance/mark",
   async (attendanceData, { rejectWithValue, dispatch, getState }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     try {
       const response = await api.post("/attendance", attendanceData);
       toast.success(response.data.message || "Attendance marked!");

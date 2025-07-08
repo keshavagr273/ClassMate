@@ -32,7 +32,7 @@ const RideShare = () => {
     searchTerm,
     filters,
   } = useSelector((state) => state.rides);
-  const { user: currentUser } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRide, setEditingRide] = useState(null);
@@ -44,16 +44,18 @@ const RideShare = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    const fetchRides = async () => {
-      try {
-        await dispatch(getAllRides());
-        await dispatch(getUserRides());
-      } catch (err) {
-        console.error("Error fetching rides:", err);
-      }
-    };
-    fetchRides();
-  }, [dispatch]);
+    if (isAuthenticated && user) {
+      const fetchRides = async () => {
+        try {
+          await dispatch(getAllRides());
+          await dispatch(getUserRides());
+        } catch (err) {
+          console.error("Error fetching rides:", err);
+        }
+      };
+      fetchRides();
+    }
+  }, [dispatch, isAuthenticated, user]);
 
   const handleSearchChange = (e) => {
     setSearchInput(e.target.value);
@@ -66,12 +68,12 @@ const RideShare = () => {
         await dispatch(
           updateRide({
             id: editingRide.id,
-            formData: { ...formData, creatorId: currentUser.id },
+            formData: { ...formData, creatorId: user.id },
           })
         );
         setEditingRide(null);
       } else {
-        await dispatch(createRide({ ...formData, creatorId: currentUser.id }));
+        await dispatch(createRide({ ...formData, creatorId: user.id }));
       }
       setIsFormOpen(false);
     } catch (err) {
@@ -272,13 +274,13 @@ const RideShare = () => {
                       {selectedRide.description && <span>Description: {selectedRide.description}</span>}
                     </div>
                     <div className="flex gap-3 justify-end mt-4">
-                      {selectedRide.creatorId === currentUser?.id ? (
+                      {selectedRide.creatorId === user?.id ? (
                         <>
                           <button className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition" onClick={() => handleEdit(selectedRide)} disabled={actionLoading}>Edit</button>
                           <button className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-500 transition" onClick={() => handleDelete(selectedRide.id)} disabled={actionLoading}>{actionLoading ? 'Deleting...' : 'Delete'}</button>
                         </>
                       ) : (
-                        selectedRide.participants && selectedRide.participants.some(p => p.participant?.id === currentUser?.id) ? (
+                        selectedRide.participants && selectedRide.participants.some(p => p.participant?.id === user?.id) ? (
                           <button className="px-4 py-2 text-sm rounded-lg bg-yellow-600 text-white hover:bg-yellow-500 transition" onClick={() => handleUnjoin(selectedRide.id)} disabled={actionLoading}>{actionLoading ? 'Cancelling...' : 'Cancel Join'}</button>
                         ) : (
                           <button className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-500 transition" onClick={() => handleJoin(selectedRide.id)} disabled={actionLoading}>{actionLoading ? 'Joining...' : 'Join Ride'}</button>

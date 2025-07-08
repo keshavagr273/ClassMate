@@ -9,7 +9,9 @@ const api = axios.create({
 
 export const getNotifications = createAsyncThunk(
   "notification/getNotifications",
-  async ({ page = 1, limit = 20 } = {}, { rejectWithValue }) => {
+  async ({ page = 1, limit = 20 } = {}, { getState, rejectWithValue }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     try {
       const response = await api.get("/notification", {
         params: { page, limit },

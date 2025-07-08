@@ -12,25 +12,28 @@ const NotificationIcon = memo(() => {
   const buttonRef = useRef(null);
   const panelRef = useRef(null);
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(state => state.auth);
 
   // Use memoized selector to prevent unnecessary re-renders
   const unreadCount = useSelector(selectUnreadCount);
 
   // Setup polling for unread notifications (if desired)
   useEffect(() => {
-    // Initial fetch
-    dispatch(getUnreadNotificationCount());
+    if (isAuthenticated) {
+      // Initial fetch
+      dispatch(getUnreadNotificationCount());
 
-    // Optional: Setup polling interval for real-time updates
-    const intervalId = setInterval(() => {
-      if (!isOpen) {
-        // Only poll when panel is closed to avoid conflicting updates
-        dispatch(getUnreadNotificationCount());
-      }
-    }, 60000); // Poll every minute
+      // Optional: Setup polling interval for real-time updates
+      const intervalId = setInterval(() => {
+        if (!isOpen) {
+          // Only poll when panel is closed to avoid conflicting updates
+          dispatch(getUnreadNotificationCount());
+        }
+      }, 60000); // Poll every minute
 
-    return () => clearInterval(intervalId);
-  }, [dispatch, isOpen]);
+      return () => clearInterval(intervalId);
+    }
+  }, [dispatch, isAuthenticated, isOpen]);
 
   // Memoized callbacks to prevent recreating functions on each render
   const togglePanel = useCallback(() => {

@@ -19,13 +19,14 @@ const NotificationPanel = memo(
   React.forwardRef(({ isOpen, onClose }, ref) => {
     const dispatch = useDispatch();
     const { unreadCount, loading } = useSelector(selectUnreadAndLoading);
+    const { isAuthenticated } = useSelector(state => state.auth);
 
     // Fetch notifications when panel opens
     useEffect(() => {
-      if (isOpen) {
+      if (isOpen && isAuthenticated) {
         dispatch(getNotifications({ page: 1, limit: 20 }));
       }
-    }, [isOpen, dispatch]);
+    }, [isOpen, isAuthenticated, dispatch]);
 
     const handleMarkAllAsRead = useCallback(
       (e) => {

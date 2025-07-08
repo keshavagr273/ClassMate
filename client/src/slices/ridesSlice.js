@@ -9,19 +9,25 @@ const api = axios.create({
   },
 });
 
-export const getAllRides = createAsyncThunk("rides/getAllRides", async () => {
+export const getAllRides = createAsyncThunk("rides/getAllRides", async (_, { getState, rejectWithValue }) => {
+  const { isAuthenticated } = getState().auth;
+  if (!isAuthenticated) return rejectWithValue("Not authenticated");
   const response = await api.get("/rides");
   return response.data.data;
 });
 
-export const getUserRides = createAsyncThunk("rides/getUserRides", async () => {
+export const getUserRides = createAsyncThunk("rides/getUserRides", async (_, { getState, rejectWithValue }) => {
+  const { isAuthenticated } = getState().auth;
+  if (!isAuthenticated) return rejectWithValue("Not authenticated");
   const response = await api.get("/rides/user/rides");
   return response.data.data;
 });
 
 export const createRide = createAsyncThunk(
   "rides/createRide",
-  async (formData) => {
+  async (formData, { getState, rejectWithValue }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     const response = await api.post("/rides", formData);
     return response.data.data;
   }
@@ -29,25 +35,33 @@ export const createRide = createAsyncThunk(
 
 export const updateRide = createAsyncThunk(
   "rides/updateRide",
-  async ({ id, formData }) => {
+  async ({ id, formData }, { getState, rejectWithValue }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     const response = await api.put(`/rides/${id}`, formData);
     return response.data.data;
   }
 );
 
-export const deleteRide = createAsyncThunk("rides/deleteRide", async (id) => {
+export const deleteRide = createAsyncThunk("rides/deleteRide", async (id, { getState, rejectWithValue }) => {
+  const { isAuthenticated } = getState().auth;
+  if (!isAuthenticated) return rejectWithValue("Not authenticated");
   await api.delete(`/rides/${id}`);
   return id;
 });
 
-export const joinRide = createAsyncThunk("rides/joinRide", async (rideId) => {
+export const joinRide = createAsyncThunk("rides/joinRide", async (rideId, { getState, rejectWithValue }) => {
+  const { isAuthenticated } = getState().auth;
+  if (!isAuthenticated) return rejectWithValue("Not authenticated");
   const response = await api.post(`/rides/${rideId}/join`);
   return response.data.data;
 });
 
 export const unjoinRide = createAsyncThunk(
   "rides/unjoinRide",
-  async (rideId) => {
+  async (rideId, { getState, rejectWithValue }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     const response = await api.delete(`/rides/${rideId}/join`);
     return response.data.data;
   }

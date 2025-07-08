@@ -99,7 +99,7 @@ function NavBar() {
           <div className="size-10 flex items-center justify-center">
             <LogoIcon />
           </div>
-          <h2 className="text-white text-xs font-extrabold leading-tight tracking-[-0.015em]">ClassMate</h2>
+          <h2 className="text-white text-2xl font-extrabold leading-tight tracking-[-0.015em]">ClassMate</h2>
         </Link>
         <nav className="flex items-center gap-4">
           {navLinks.map(link => (

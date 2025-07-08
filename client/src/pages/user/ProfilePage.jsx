@@ -32,6 +32,7 @@ const ProfilePage = () => {
   const { user, isEditing, loading, error } = useSelector(
     (state) => state.profile
   );
+  const { isAuthenticated } = useSelector(state => state.auth);
   const [notification, setNotification] = useState(null);
   const [originalData, setOriginalData] = useState(null);
   const [userData, setUserData] = useState({
@@ -69,18 +70,17 @@ const ProfilePage = () => {
   ];
 
   const hostelOptions = [
-    "SVBH",
-    "DGJH",
-    "Tilak",
-    "Malviya",
-    "Patel",
-    "Tandon",
-    "PG",
+    "CECT Hostel",
+    "Coho Hostel",
+    "Supermax Flats",
+    "Tdi flats",
   ];
 
   useEffect(() => {
-    dispatch(getUser());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(getUser());
+    }
+  }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
     if (user) {

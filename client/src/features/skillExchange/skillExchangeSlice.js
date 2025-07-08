@@ -6,7 +6,9 @@ const api = axios.create({
   withCredentials: true
 });
 
-export const fetchSkills = createAsyncThunk('skillExchange/fetchSkills', async () => {
+export const fetchSkills = createAsyncThunk('skillExchange/fetchSkills', async (_, { getState, rejectWithValue }) => {
+  const { isAuthenticated } = getState().auth;
+  if (!isAuthenticated) return rejectWithValue('Not authenticated');
   const res = await api.get('/skills');
   return res.data.skills;
 });

@@ -11,7 +11,9 @@ const api = axios.create({
 
 export const createItem = createAsyncThunk(
   "buyAndSell/createItem",
-  async (formData, { rejectWithValue }) => {
+  async (formData, { getState, rejectWithValue }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     try {
       const response = await api.post("/buy-and-sell/items", formData, {
         headers: { "Content-Type": "multipart/form-data" },

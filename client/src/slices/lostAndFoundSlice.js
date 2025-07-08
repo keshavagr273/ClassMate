@@ -10,16 +10,15 @@ const api = axios.create({
 // Thunk to fetch lost and found items
 export const fetchLostItems = createAsyncThunk(
   "lostAndFound/fetchLostItems",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
+    const { isAuthenticated } = getState().auth;
+    if (!isAuthenticated) return rejectWithValue("Not authenticated");
     try {
       const response = await api.get("/lost-and-found/lost-items");
-      if (response.data.success) {
-        return response.data.data;
-      }
-      return rejectWithValue(response.data.message);
-    } catch (err) {
+      return response.data.data || [];
+    } catch (error) {
       return rejectWithValue(
-        err.response?.data?.message || "Error fetching lost items"
+        error.response?.data?.message || "Failed to fetch lost items"
       );
     }
   }

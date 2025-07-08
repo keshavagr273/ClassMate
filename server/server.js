@@ -96,6 +96,29 @@ app.use("/api/enrollments", enrollmentRoutes);
 app.use('/api/skill-exchange', skillExchangeRoutes);
 app.use('/api/internships', internshipRoutes);
 
+app.use((err, req, res, next) => {
+  if (err && err.statusCode === 401) {
+    // Suppress stack trace for 401 errors
+    res.status(401).json({
+      status: 'error',
+      code: 401,
+      message: err.message || 'Not authenticated',
+      data: null,
+      success: false
+    });
+  } else {
+    // Log all other errors as usual
+    console.error(err);
+    res.status(err.statusCode || 500).json({
+      status: 'error',
+      code: err.statusCode || 500,
+      message: err.message || 'Internal Server Error',
+      data: null,
+      success: false
+    });
+  }
+});
+
 import { connectDb } from "./src/db/db.js";
 
 

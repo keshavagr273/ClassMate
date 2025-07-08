@@ -153,7 +153,7 @@ const AttendancePage = () => {
   }, [dispatch, isAuthenticated, userId, selectedSubjectId]);
 
   useEffect(() => {
-    if (userId && selectedSubjectId && selectedDate) {
+    if (isAuthenticated && userId && selectedSubjectId && selectedDate) {
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       const filters = {
         userId,
@@ -167,7 +167,7 @@ const AttendancePage = () => {
     } else {
       dispatch(clearDetailedAttendance());
     }
-  }, [dispatch, userId, selectedSubjectId, selectedDate]);
+  }, [dispatch, isAuthenticated, userId, selectedSubjectId, selectedDate]);
 
   // --- Event Handlers (Callbacks for Child Components) ---
   const handleSubjectChangeAndSelect = useCallback(

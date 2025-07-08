@@ -8,7 +8,7 @@ const AVATAR_PLACEHOLDER =
 
 const SkillExchangeDashboard = () => {
   const dispatch = useDispatch();
-  const { skills = [], matches = [], loading, error } = useSelector(state => state.skillExchange || {});
+  const { skills = [], matches = [], loading, error, isAuthenticated } = useSelector(state => state.skillExchange || {});
   const [mode, setMode] = useState('learn'); // 'learn' or 'teach'
   const [skillInput, setSkillInput] = useState('');
   const [message, setMessage] = useState('');
@@ -22,9 +22,11 @@ const SkillExchangeDashboard = () => {
   ));
 
   useEffect(() => {
-    dispatch(fetchSkills());
-    dispatch(fetchMatches());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchSkills());
+      dispatch(fetchMatches());
+    }
+  }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
     // Sync teachSkills and learnSkills with backend after fetch
@@ -59,6 +61,7 @@ const SkillExchangeDashboard = () => {
   };
 
   const handleDeleteTeachSkill = async (skillName) => {
+    if (!isAuthenticated) return;
     // Find the UserSkill entry for this skill and type 'teach'
     const skillObj = skills.find(s => s.name === skillName);
     if (!skillObj) return;
