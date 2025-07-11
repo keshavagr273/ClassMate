@@ -16,13 +16,6 @@ const router = express.Router();
 
 router.post("/signup", emailMiddleware, registerUser);
 router.post("/login", emailMiddleware, loginUser);
-<<<<<<< HEAD
-=======
-
-
-// router.get("/verify-email", verifyEmail);
-
->>>>>>> e96e5ef (Local changes)
 router.get("/user/:id", getUserById);
 
 

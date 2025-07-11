@@ -9,14 +9,8 @@ import UserSubject from "./user_subject.model.js";
 import AttendanceRecord from "./attendance_record.model.js";
 
 export const initializeAssociations = () => {
-<<<<<<< HEAD
-  // User - Roles associations (many-to-many)
-  User.belongsToMany(Role, { through: UserRole, foreignKey: "user_id" });
-  Role.belongsToMany(User, { through: UserRole, foreignKey: "role_id" });
+  // Removed User - Roles associations (many-to-many) because Role model was deleted
 
-=======
-  // User - LostAndFound associations
->>>>>>> e96e5ef (Local changes)
   User.hasMany(LostAndFound, {
     foreignKey: "userId",
     onDelete: "CASCADE",
