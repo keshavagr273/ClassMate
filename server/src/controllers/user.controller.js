@@ -14,32 +14,17 @@ dotenv.config();
 console.log(process.env.CLIENT_URL)
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-/*
-=============================
-        Time and Date  
-=============================
-*/
 const getCurrentUTCDateTime = () => {
   const now = new Date();
   return now.toISOString().slice(0, 19).replace("T", " ");
 };
 
-/*
-=============================
-        Extract Registration Number and Graduation Year 
-=============================
-*/
 const extractRegistrationDetails = (email) => {
   const registrationNumber = email.match(/\d{8}/)[0];
   const graduationYear = parseInt(registrationNumber.substring(0, 4)) + 4;
   return { registrationNumber, graduationYear };
 };
 
-/*
-=============================
-        Register User 
-=============================
-*/
 export const registerUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
   const existingUser = await User.findOne({ where: { email } });
@@ -60,9 +45,6 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     return next(new ApiError("This user already exists. Please check your email or use a different email.", 400));
   }
 
-  // Debug log for registration values
-  console.log({ email, password, hashedPassword });
-
   const newUser = await User.create({
     email,
     password: hashedPassword,
@@ -70,7 +52,6 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     graduation_year: graduationYear,
   });
 
-  // Ensure all default subjects exist with unique codes
   const defaultSubjects = [
     "Data Structure",
     "Operating System",
@@ -113,11 +94,6 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     );
 });
 
-/*
-=============================
-        Login User 
-=============================
-*/
 export const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -158,12 +134,6 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     );
 });
 
-/*
-==============================
-       Get Current User 
-==============================
-*/
-
 export const getCurrentUser = asyncHandler(async (req, res, next) => {
   if (!req.user) return next(new ApiError("Not authenticated", 401));
 
@@ -185,11 +155,6 @@ export const getCurrentUser = asyncHandler(async (req, res, next) => {
     );
 });
 
-/*
-==============================
-       Update User 
-==============================
-*/
 export const updateUser = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const { name, semester, branch, hostel } = req.body;
@@ -221,11 +186,6 @@ export const updateUser = asyncHandler(async (req, res, next) => {
     );
 });
 
-/*
-==============================
-       Logout User 
-==============================
-*/
 export const logoutUser = asyncHandler(async (req, res, next) => {
   res.clearCookie("token", {
     httpOnly: true,
@@ -240,11 +200,6 @@ export const logoutUser = asyncHandler(async (req, res, next) => {
   res.status(200).json(new ApiResponse(200, null, "Logged out successfully"));
 });
 
-/*
-==============================
-       Get User By ID
-==============================
-*/
 export const getUserById = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
@@ -267,11 +222,6 @@ export const getUserById = asyncHandler(async (req, res, next) => {
     );
 });
 
-/*
-==============================
-       Get All Users (Admin Only)
-==============================
-*/
 export const getAllUsers = asyncHandler(async (req, res, next) => {
  
   try {
