@@ -14,7 +14,6 @@ export const initializeAssociations = () => {
   User.belongsToMany(Role, { through: UserRole, foreignKey: "user_id" });
   Role.belongsToMany(User, { through: UserRole, foreignKey: "role_id" });
 
-  // User - LostAndFound associations
   User.hasMany(LostAndFound, {
     foreignKey: "userId",
     onDelete: "CASCADE",
@@ -43,11 +42,6 @@ export const initializeAssociations = () => {
   Rides.hasMany(RideParticipant, { foreignKey: "rideId", as: "participants" });
   RideParticipant.belongsTo(Rides, { foreignKey: "rideId" });
 
-  // ================================================
-  // START: Attendance Tracker Associations
-  // ================================================
-
-  // --- User <-> Subject (Many-to-Many Enrollment) ---
   User.belongsToMany(Subject, {
     through: UserSubject,
     foreignKey: "userId",
@@ -61,13 +55,11 @@ export const initializeAssociations = () => {
     as: "enrolledUsers",
   });
 
-  // Optional: Direct associations with the join table
   User.hasMany(UserSubject, { foreignKey: "userId", as: "enrollments" });
   UserSubject.belongsTo(User, { foreignKey: "userId" });
   Subject.hasMany(UserSubject, { foreignKey: "subjectId", as: "enrollments" });
   UserSubject.belongsTo(Subject, { foreignKey: "subjectId" });
 
-  // --- User <-> AttendanceRecord (One-to-Many) ---
   User.hasMany(AttendanceRecord, {
     foreignKey: "userId",
     as: "attendanceRecords",
@@ -78,7 +70,6 @@ export const initializeAssociations = () => {
     as: "student",
   });
 
-  // --- Subject <-> AttendanceRecord (One-to-Many) ---
   Subject.hasMany(AttendanceRecord, {
     foreignKey: "subjectId",
     as: "attendanceRecords",
@@ -88,10 +79,6 @@ export const initializeAssociations = () => {
     foreignKey: "subjectId",
     as: "subject",
   });
-
-  // ================================================
-  // END: Attendance Tracker Associations
-  // ================================================
 };
 
 export {
