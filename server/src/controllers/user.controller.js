@@ -1,18 +1,15 @@
 import User from "../models/user.model.js";
-import { Role, UserRole } from "../models/role.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { OAuth2Client } from "google-auth-library";
 import dotenv from "dotenv";
 import Subject from "../models/subject.model.js";
 import UserSubject from "../models/user_subject.model.js";
 dotenv.config();
 
 console.log(process.env.CLIENT_URL)
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const getCurrentUTCDateTime = () => {
   const now = new Date();
@@ -75,12 +72,6 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Assign default role to new user
-  const userRole = await Role.findOne({ where: { role_name: "user" } });
-  if (userRole) {
-    await UserRole.create({ user_id: newUser.id, role_id: userRole.role_id }); 
-  }
-
   console.log(`New user registered at ${getCurrentUTCDateTime()}`);
 
   res
@@ -97,14 +88,13 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 export const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ where: { email }, include: Role });
+  const user = await User.findOne({ where: { email } });
   if (!user) return next(new ApiError("Email or password is wrong, re-enter.", 400));
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) return next(new ApiError("Email or password is wrong, re-enter.", 400));
 
-  const roles = user.Roles.map((role) => role.role_name);
   const token = jwt.sign(
-    { id: user.id, email: user.email, roles },
+    { id: user.id, email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
@@ -128,7 +118,7 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     .json(
       new ApiResponse(
         200,
-        { user: { id: user.id, email: user.email, roles } },
+        { user: { id: user.id, email: user.email } },
         "Login successful"
       )
     );
@@ -139,17 +129,15 @@ export const getCurrentUser = asyncHandler(async (req, res, next) => {
 
   const user = await User.findByPk(req.user.id, {
     attributes: { exclude: ["password"] },
-    include: Role,
   });
   if (!user) return next(new ApiError("User not found", 404));
 
-  const roles = user.Roles.map((role) => role.role_name);
   res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        { user: { ...user.toJSON(), roles } },
+        { user: { ...user.toJSON() } },
         "User retrieved successfully"
       )
     );
@@ -159,7 +147,7 @@ export const updateUser = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const { name, semester, branch, hostel } = req.body;
 
-  const user = await User.findByPk(userId, { include: Role });
+  const user = await User.findByPk(userId, { });
   if (!user) return next(new ApiError("User not found", 404));
 
   if (name !== undefined) user.name = name;
@@ -173,14 +161,13 @@ export const updateUser = asyncHandler(async (req, res, next) => {
   );
 
   // Reload user with roles to ensure associations are up-to-date
-  const updatedUser = await User.findByPk(userId, { include: Role });
-  const roles = updatedUser.Roles.map((role) => role.role_name);
+  const updatedUser = await User.findByPk(userId, { });
   res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        { user: { ...updatedUser.toJSON(), roles } },
+        { user: { ...updatedUser.toJSON() } },
         "User updated successfully"
       )
     );
@@ -205,18 +192,16 @@ export const getUserById = asyncHandler(async (req, res, next) => {
 
   const user = await User.findByPk(id, {
     attributes: { exclude: ["password"] },
-    include: Role,
   });
 
   if (!user) return next(new ApiError("User not found", 404));
 
-  const roles = user.Roles.map((role) => role.role_name);
   res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        { user: { ...user.toJSON(), roles } },
+        { user: { ...user.toJSON() } },
         "User fetched successfully"
       )
     );
@@ -227,19 +212,12 @@ export const getAllUsers = asyncHandler(async (req, res, next) => {
   try {
     const users = await User.findAll({
       attributes: { exclude: ["password"] }, 
-      include: {
-        model: Role,
-        attributes: ["role_name"],
-        through: { attributes: [] }, 
-      },
       order: [["id", "ASC"]], 
     });
 
     
     const formattedUsers = users.map((user) => {
       const userJSON = user.toJSON(); 
-      userJSON.roles = userJSON.Roles.map((role) => role.role_name); // Create simple roles array
-      delete userJSON.Roles; 
       return userJSON;
     });
 

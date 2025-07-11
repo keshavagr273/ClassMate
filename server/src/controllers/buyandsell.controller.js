@@ -159,13 +159,6 @@ export const deleteBuyAndSellItem = asyncHandler(async (req, res) => {
   const item = await BuyAndSell.findByPk(id);
   if (!item) throw new ApiError("Item not found", 404);
 
- if (
-   (!req.user || item.userId !== req.user.id) &&
-   (!req.user || req.user.role !== "admin")
- ) {
-   throw new ApiError("User is not authorized to delete this item", 403);
- }
-
   // Delete image from Cloudinary if it exists
   if (item.image_url) {
     const publicId = extractCloudinaryPublicId(item.image_url);

@@ -82,8 +82,7 @@ export const updateRide = asyncHandler(async (req, res) => {
   if (!ride) throw new ApiError("Ride not found", 404);
 
   // Check if user is admin or creator
-  const isAdmin = req.user?.roles?.includes("admin");
-  if (ride.creatorId !== req.user?.id && !isAdmin) {
+  if (ride.creatorId !== req.user?.id) {
     throw new ApiError("Unauthorized", 403);
   }
 
@@ -140,8 +139,7 @@ export const deleteRide = asyncHandler(async (req, res) => {
   }
 
   // Check if user is admin or creator
-  const isAdmin = req.user?.roles?.includes("admin");
-  if (ride.creatorId !== req.user?.id && !isAdmin) {
+  if (ride.creatorId !== req.user?.id) {
     throw new ApiError("Unauthorized", 403);
   }
 

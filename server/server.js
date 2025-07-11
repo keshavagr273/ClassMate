@@ -12,7 +12,6 @@ import "./src/models/lostandfound.model.js";
 import "./src/models/notification.model.js";
 import "./src/models/ride.model.js";
 import "./src/models/rideParticipant.model.js";
-import "./src/models/role.model.js";
 import "./src/models/subject.model.js";
 import "./src/models/user.model.js";
 import "./src/models/user_subject.model.js";

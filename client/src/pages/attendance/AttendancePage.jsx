@@ -324,6 +324,7 @@ const AttendancePage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-white">Attendance Dashboard</h1>
           <p className="text-sm text-gray-400">Track your attendance across all your subjects.</p>
+          <p className="text-sm text-amber-300 mt-2">To mark attendance, first select your subject(s) and then click on <b>Mark Attendance</b>.</p>
         </div>
         {/* Subject Breakdown Section (enables subject selection) */}
         <SubjectBreakdownSection

@@ -5,15 +5,18 @@ import LostAndFound from "./lostandfound.model.js";
 import { Subject } from "./subject.model.js"; // You already had this
 import Rides from "./ride.model.js";
 import RideParticipant from "./rideParticipant.model.js";
-import { Role, UserRole } from "./role.model.js";
 import UserSubject from "./user_subject.model.js";
 import AttendanceRecord from "./attendance_record.model.js";
 
 export const initializeAssociations = () => {
+<<<<<<< HEAD
   // User - Roles associations (many-to-many)
   User.belongsToMany(Role, { through: UserRole, foreignKey: "user_id" });
   Role.belongsToMany(User, { through: UserRole, foreignKey: "role_id" });
 
+=======
+  // User - LostAndFound associations
+>>>>>>> e96e5ef (Local changes)
   User.hasMany(LostAndFound, {
     foreignKey: "userId",
     onDelete: "CASCADE",
@@ -88,8 +91,6 @@ export {
   Subject,
   Rides,
   RideParticipant,
-  Role,
-  UserRole,
   UserSubject,
   AttendanceRecord,
 };

@@ -97,8 +97,7 @@ export const deleteLostItem = asyncHandler(async (req, res) => {
   }
 
   if (
-    (!req.user || item.userId !== req.user.id) &&
-    (!req.user || req.user.role !== "admin")
+    (!req.user || item.userId !== req.user.id)
   ) {
     throw new ApiError("User is not authorized to delete this item", 403);
   }
