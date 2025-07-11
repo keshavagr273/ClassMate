@@ -14,33 +14,14 @@ import {
 
 const router = express.Router();
 
-/*
-=======================================================================
-        Public Routes
-=======================================================================
-*/
-
-
 router.post("/signup", emailMiddleware, registerUser);
 router.post("/login", emailMiddleware, loginUser);
-// router.post("/google-auth",emailMiddleware, googleAuth);
-
-
-// router.get("/verify-email", verifyEmail);
-
 router.get("/user/:id", getUserById);
 
-/*
-=======================================================================
-        Protected Routes
-=======================================================================
-*/
 
 router.get("/current", authMiddleware, getCurrentUser);
 router.put("/update", authMiddleware, updateUser);
 router.post("/logout", authMiddleware, logoutUser);
-
-// --- Admin Only Route ---
 router.get('/admin/all',authMiddleware, getAllUsers);
 
 
