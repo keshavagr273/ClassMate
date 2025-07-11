@@ -1,12 +1,6 @@
 import sequelize from "../db/db.js";
 import { DataTypes } from "sequelize";
 
-/*
-=============================
-        User Model  
-=============================
-*/
-
 const users = sequelize.define(
   "users",
   {
