@@ -11,12 +11,11 @@ const Notification = sequelize.define(
       primaryKey: true,
     },
     userId: {
-      // The User model uses an integer id, so we use INTEGER here.
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "user_id", // Explicitly set the database column name to "user_id"
+      field: "user_id", 
       references: {
-        model: "users", // Ensure this matches the table name in the User model
+        model: "users",
         key: "id",
       },
     },
@@ -64,7 +63,6 @@ const Notification = sequelize.define(
     tableName: "notifications",
     indexes: [
       {
-        // Define index on the database column name.
         fields: ["user_id"],
       },
       {
@@ -74,8 +72,6 @@ const Notification = sequelize.define(
   }
 );
 
-// Define associations with User model.
-// Using 'userId' (camelCase) in the model, which maps to "user_id" in the database.
 Notification.belongsTo(User, { foreignKey: "userId" });
 User.hasMany(Notification, { foreignKey: "userId" });
 
