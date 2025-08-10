@@ -8,10 +8,8 @@ import {
   clearError,
   checkAuthStatus,
 } from "../../slices/authSlice";
-import ButtonColourfull from "../../components/common/buttons";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import PasswordInput from "./password";
 
 const LoginPage = () => {
   const dispatch = useDispatch();

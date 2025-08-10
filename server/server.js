@@ -5,17 +5,6 @@ import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import { initializeAssociations } from "./src/models/association.js";
 
-import "./src/models/association.js";
-import "./src/models/attendance_record.model.js";
-import "./src/models/buyandsell.model.js";
-import "./src/models/lostandfound.model.js";
-import "./src/models/notification.model.js";
-import "./src/models/ride.model.js";
-import "./src/models/rideParticipant.model.js";
-import "./src/models/subject.model.js";
-import "./src/models/user.model.js";
-import "./src/models/user_subject.model.js";
-
 import sequelize from "./src/db/db.js";
 
 import userRoutes from "./src/routes/user.routes.js";

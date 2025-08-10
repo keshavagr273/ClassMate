@@ -4,8 +4,6 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/apiError.js";
 import {
   uploadImageToCloudinary,
-  deleteImageFromCloudinary,
-  extractCloudinaryPublicId,
 } from "../utils/cloudinary.js";
 
 export const getUserNotifications = asyncHandler(async (req, res) => {

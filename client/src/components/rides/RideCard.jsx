@@ -9,7 +9,6 @@ import {
   User,
   Loader2,
   Eye,
-  MapPin,
   Calendar,
 } from "lucide-react";
 import { formatDateTime, isRideActive } from "../../utils/dateUtils";
@@ -33,7 +32,6 @@ const RideCard = ({
   );
 
   const [showParticipants, setShowParticipants] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   if (!ride) {
     return <div className="p-6 text-red-500">Invalid ride data</div>;
@@ -57,8 +55,7 @@ const RideCard = ({
         y: -5,
         boxShadow: "0 10px 30px -15px rgba(138, 75, 235, 0.3)",
       }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+
       className={`p-5 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg shadow-lg ${cardStatusClass} overflow-hidden relative`}
     >
       {/* Background pattern for visual interest */}

@@ -6,10 +6,7 @@ import {
   Calendar,
   Users,
   CreditCard,
-  ChevronDown,
   X,
-  ArrowLeft,
-  ArrowRight,
   Sliders,
 } from "lucide-react";
 

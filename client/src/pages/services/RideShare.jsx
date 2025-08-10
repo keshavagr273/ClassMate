@@ -15,8 +15,6 @@ import {
   deleteRide,
   setSearchTerm,
   setFilters,
-  setFilteredRides,
-  setActiveFilterCount,
   joinRide,
   unjoinRide,
 } from "../../slices/ridesSlice";
@@ -37,11 +35,6 @@ const RideShare = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRide, setEditingRide] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [searchInput, setSearchInput] = useState("");
-  const [selectedRide, setSelectedRide] = useState(null);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -58,7 +51,6 @@ const RideShare = () => {
   }, [dispatch, isAuthenticated, user]);
 
   const handleSearchChange = (e) => {
-    setSearchInput(e.target.value);
     dispatch(setSearchTerm(e.target.value));
   };
 
@@ -81,22 +73,7 @@ const RideShare = () => {
     }
   };
 
-  const handleViewDetails = (ride) => {
-    setSelectedRide(ride);
-    setDetailsModalOpen(true);
-  };
 
-  const handleJoin = async (rideId) => {
-    setActionLoading(true);
-    try {
-      await dispatch(joinRide(rideId)).unwrap();
-      setDetailsModalOpen(false);
-    } catch (err) {
-      alert(err.message || 'Failed to join ride.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleUnjoin = async (rideId) => {
     setActionLoading(true);
@@ -129,7 +106,7 @@ const RideShare = () => {
   };
 
   const clearAllFilters = () => {
-    setSearchInput("");
+
     dispatch(setSearchTerm(""));
     dispatch(
       setFilters({

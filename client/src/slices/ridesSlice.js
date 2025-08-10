@@ -385,8 +385,6 @@ export const {
   clearError,
   setSearchTerm,
   setFilters,
-  setFilteredRides,
-  setActiveFilterCount,
 } = ridesSlice.actions;
 
 export default ridesSlice.reducer;

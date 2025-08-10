@@ -6,11 +6,8 @@ import {
   Routes,
   Route,
   Navigate,
-  useLocation,
 } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { AuthProvider } from "./contexts/AuthContext";
-import { NotificationProvider } from "./contexts/NotificationContext";
+import { useSelector } from "react-redux";
 
 // Layout & Common Components
 import NavBar from "./components/common/layout/NavBar";
@@ -38,7 +35,6 @@ import SkillExchangeDashboard from './pages/skill-exchange/SkillExchangeDashboar
 import { InternConnect } from './pages';
 
 function App() {
-  const dispatch = useDispatch();
   const { loading: authLoading, lastChecked } = useSelector(
     (state) => state.auth
   );
@@ -48,63 +44,59 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <div className="min-h-screen flex flex-col bg-[#151a1e]">
-            <NavBar />
-            <main className="flex-1">
-              <Routes>
-                {/* --- Public Routes --- */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/404" element={<NotFound />} />
-                <Route path="/500" element={<ServerError />} />
+    <BrowserRouter>
+      <ScrollToTop />
+      <div className="min-h-screen flex flex-col bg-[#151a1e]">
+        <NavBar />
+        <main className="flex-1">
+          <Routes>
+            {/* --- Public Routes --- */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/404" element={<NotFound />} />
+            <Route path="/500" element={<ServerError />} />
 
-                {/* --- Public-only route (not for logged-in users) --- */}
-                <Route
-                  path="/login"
-                  element={
-                    <PublicRoute>
-                      <LoginPage />
-                    </PublicRoute>
-                  }
-                />
+            {/* --- Public-only route (not for logged-in users) --- */}
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              }
+            />
 
-                {/* --- Protected Routes --- */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/rides" element={<RideShare />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/admin/*" element={<AdminPanel />} />
-                  <Route path="/attendance" element={<AttendancePage />} />
-                  <Route path="/lost-found" element={<LostAndFound />} />
-                  <Route path="/skill-exchange" element={<SkillExchangeDashboard />} />
-                </Route>
+            {/* --- Protected Routes --- */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/rides" element={<RideShare />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/admin/*" element={<AdminPanel />} />
+              <Route path="/attendance" element={<AttendancePage />} />
+              <Route path="/lost-found" element={<LostAndFound />} />
+              <Route path="/skill-exchange" element={<SkillExchangeDashboard />} />
+            </Route>
 
-                {/* --- New Route --- */}
-                <Route path="/intern-connect" element={<InternConnect />} />
+            {/* --- New Route --- */}
+            <Route path="/intern-connect" element={<InternConnect />} />
 
-                {/* --- Catch-All Route --- */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-          </div>
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="dark"
-          />
-        </BrowserRouter>
-      </NotificationProvider>
-    </AuthProvider>
+            {/* --- Catch-All Route --- */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+      </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+    </BrowserRouter>
   );
 }
 

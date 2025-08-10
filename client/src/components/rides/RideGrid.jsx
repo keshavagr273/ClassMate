@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { isRideActive } from "../../utils/dateUtils";
 import RideCard from "./RideCard";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { joinRide, unjoinRide } from "../../slices/ridesSlice";
 import { toast } from "react-hot-toast";
 
