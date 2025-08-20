@@ -6,12 +6,13 @@ dotenv.config();
 // Database Connection using URI
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: "postgres",
-  logging: false, // Disable logging for cleaner output
+  logging: false,
   dialectOptions: {
     ssl: {
       require: true,
       rejectUnauthorized: false, // Supabase requires SSL
     },
+    family: 4, // 👈 Force IPv4 to fix ENETUNREACH on Render
   },
   pool: {
     max: 10,

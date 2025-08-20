@@ -49,14 +49,14 @@ const FeatureCard = React.memo(
     const cardClasses = {
       wrapper: `group relative cursor-pointer overflow-hidden rounded-2xl shadow-md bg-[#1a1a1a] hover:ring-2 hover:ring-indigo-500 transition-all duration-300 ${height}`,
       container:
-        "relative p-6 sm:p-7 md:p-8 flex flex-col items-center justify-between text-white h-full",
-      iconWrapper: `bg-gradient-to-r ${gradient} p-4 rounded-xl shadow-md mb-4 transform transition-transform group-hover:scale-105`,
-      icon: "h-10 w-10 sm:h-12 sm:w-12 text-white",
-      title: `text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${gradient}`,
-      description: "text-base text-gray-400 text-center mt-2 line-clamp-3",
-      learnMore: "mt-4 flex items-center gap-1 text-indigo-400 hover:text-white transition",
-      learnMoreText: "text-sm font-medium",
-      arrowIcon: "w-4 h-4",
+        "relative p-4 sm:p-5 md:p-6 lg:p-7 xl:p-8 flex flex-col items-center justify-between text-white h-full",
+      iconWrapper: `bg-gradient-to-r ${gradient} p-3 sm:p-4 rounded-xl shadow-md mb-3 sm:mb-4 transform transition-transform group-hover:scale-105`,
+      icon: "h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-white",
+      title: `text-lg sm:text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${gradient}`,
+      description: "text-sm sm:text-base text-gray-400 text-center mt-2 line-clamp-3",
+      learnMore: "mt-3 sm:mt-4 flex items-center gap-1 text-indigo-400 hover:text-white transition",
+      learnMoreText: "text-xs sm:text-sm font-medium",
+      arrowIcon: "w-3 h-3 sm:w-4 sm:h-4",
     };
 
     return (

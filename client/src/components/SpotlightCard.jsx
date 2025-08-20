@@ -11,14 +11,14 @@ const SpotlightCard = ({ image, title, subtitle, description, link }) => {
       <img
         src={image}
         alt={title}
-        className="w-full h-40 object-cover"
+        className="w-full h-32 sm:h-36 md:h-40 object-cover"
       />
-      <div className="p-4 flex flex-col h-full">
-        <h3 className="text-white text-lg font-bold">{title}</h3>
-        <p className="text-[#90adcb] text-sm">{subtitle}</p>
-        <p className="text-gray-400 text-sm mt-2 flex-grow">{description}</p>
+      <div className="p-3 sm:p-4 flex flex-col h-full">
+        <h3 className="text-white text-base sm:text-lg font-bold">{title}</h3>
+        <p className="text-[#90adcb] text-xs sm:text-sm">{subtitle}</p>
+        <p className="text-gray-400 text-xs sm:text-sm mt-2 flex-grow">{description}</p>
         <Link to={link}>
-          <button className="mt-4 text-sm font-semibold text-[#0c7ff2] hover:underline">
+          <button className="mt-3 sm:mt-4 text-xs sm:text-sm font-semibold text-[#0c7ff2] hover:underline">
             Read More →
           </button>
         </Link>

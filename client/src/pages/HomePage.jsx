@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import FeatureCard from "../components/HomePage/FeatureCard";
@@ -101,127 +101,177 @@ const HomePage = () => {
 
   const scrollRight = () => {
     if (sliderRef.current) {
-      sliderRef.current.scrollBy({ left: 280, behavior: "smooth" });
+      const scrollDistance = window.innerWidth < 640 ? 260 : 280;
+      sliderRef.current.scrollBy({ left: scrollDistance, behavior: "smooth" });
     }
   };
 
   const scrollToTools = () => {
-    toolsRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (toolsRef.current) {
+      toolsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
+
+  // Add touch scroll support for mobile
+  useEffect(() => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+
+    const handleMouseDown = (e) => {
+      isDown = true;
+      slider.style.cursor = 'grabbing';
+      startX = e.pageX - slider.offsetLeft;
+      scrollLeft = slider.scrollLeft;
+    };
+
+    const handleMouseLeave = () => {
+      isDown = false;
+      slider.style.cursor = 'grab';
+    };
+
+    const handleMouseUp = () => {
+      isDown = false;
+      slider.style.cursor = 'grab';
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - slider.offsetLeft;
+      const walk = (x - startX) * 2;
+      slider.scrollLeft = scrollLeft - walk;
+    };
+
+    slider.addEventListener('mousedown', handleMouseDown);
+    slider.addEventListener('mouseleave', handleMouseLeave);
+    slider.addEventListener('mouseup', handleMouseUp);
+    slider.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      slider.removeEventListener('mousedown', handleMouseDown);
+      slider.removeEventListener('mouseleave', handleMouseLeave);
+      slider.removeEventListener('mouseup', handleMouseUp);
+      slider.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300 flex flex-col">
       {/* <NavBar /> */}
       <div className="layout-container flex h-full grow flex-col">
         {/* Main Content */}
-        <div className="px-40 flex flex-1 justify-center py-5">
-          <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
+        <div className="px-4 sm:px-8 md:px-16 lg:px-32 xl:px-40 flex flex-1 justify-center py-3 sm:py-4 md:py-5">
+          <div className="layout-content-container flex flex-col max-w-full sm:max-w-[640px] md:max-w-[768px] lg:max-w-[960px] flex-1 space-y-4 sm:space-y-6 md:space-y-8">
             <HeroSection onExploreClick={scrollToTools} />
             {/* Key Features */}
-            <div ref={toolsRef} className="flex justify-between items-center px-4 pt-5">
-              <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">ClassMate Tools</h2>
+            <div ref={toolsRef} className="flex flex-col sm:flex-row sm:justify-between sm:items-center px-4 pt-3 sm:pt-4 md:pt-5 space-y-3 sm:space-y-0">
+              <h2 className="text-white text-lg sm:text-xl md:text-[22px] font-bold leading-tight tracking-[-0.015em]">ClassMate Tools</h2>
               <button
                 onClick={scrollRight}
-                className="text-white bg-sky-600 hover:bg-sky-500 px-3 py-1 rounded-md"
+                className="text-white bg-sky-600 hover:bg-sky-500 px-2 sm:px-3 py-1 sm:py-2 rounded-md text-xs sm:text-sm md:text-base transition-colors self-start sm:self-auto"
               >
                 ➡ Slide
               </button>
             </div>
             <div
               ref={sliderRef}
-              className="flex overflow-x-auto gap-4 px-4 py-3 scroll-smooth no-scrollbar"
+              className="flex overflow-x-auto gap-3 sm:gap-4 px-4 py-2 sm:py-3 scroll-smooth no-scrollbar snap-x cursor-grab active:cursor-grabbing"
             >
               {featureModules.map((feature, index) => (
                 <div
                   key={index}
-                  className="min-w-[280px] transition-transform transform hover:scale-105 snap-start"
+                  className="min-w-[260px] sm:min-w-[280px] transition-transform transform hover:scale-105 snap-start flex-shrink-0"
                 >
                   <FeatureCard {...feature} />
                 </div>
               ))}
             </div>
             {/* Quick Links */}
-            <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Quick Links</h2>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-5 p-4">
-              <a href="/calendar.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
+            <h2 className="text-white text-lg sm:text-xl md:text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-2 sm:pb-3 pt-3 sm:pt-4 md:pt-5">Quick Links</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 p-4">
+              <a href="/calendar.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-3 sm:gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-4 sm:p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition group">
                 {/* Calendar Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" fill="currentColor" viewBox="0 0 256 256">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" className="sm:w-9 sm:h-9 flex-shrink-0" fill="currentColor" viewBox="0 0 256 256">
                   <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-96-88v64a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm59.16,30.45L152,176h16a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136,23.76,23.76,0,0,1,171.16,150.45Z"></path>
                 </svg>
-                <h2 className="text-white text-xl font-bold leading-tight">Academic Calendar</h2>
+                <h2 className="text-white text-lg sm:text-xl font-bold leading-tight group-hover:text-blue-300 transition-colors">Academic Calendar</h2>
               </a>
-              <a href="/contact.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
+              <a href="/contact.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-3 sm:gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-4 sm:p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition group">
                 {/* Phone Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" fill="currentColor" viewBox="0 0 256 256">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" className="sm:w-9 sm:h-9 flex-shrink-0" fill="currentColor" viewBox="0 0 256 256">
                   <path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z"></path>
                 </svg>
-                <h2 className="text-white text-xl font-bold leading-tight">Important Contacts</h2>
+                <h2 className="text-white text-lg sm:text-xl font-bold leading-tight group-hover:text-blue-300 transition-colors">Important Contacts</h2>
               </a>
-              <a href="https://www.onlinesbi.sbi/sbicollect/" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
+              <a href="https://www.onlinesbi.sbi/sbicollect/" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-3 sm:gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-4 sm:p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition group">
                 {/* Credit Card Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" fill="currentColor" viewBox="0 0 24 24">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" className="sm:w-9 sm:h-9 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
                   <line x1="2" y1="10" x2="22" y2="10" stroke="currentColor" strokeWidth="2"/>
                   <rect x="6" y="15" width="4" height="2" rx="1" fill="currentColor" />
                 </svg>
-                <h2 className="text-white text-xl font-bold leading-tight">Payment Portal</h2>
+                <h2 className="text-white text-lg sm:text-xl font-bold leading-tight group-hover:text-blue-300 transition-colors">Payment Portal</h2>
               </a>
-              <a href="/timetable.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition">
+              <a href="/timetable.pdf" target="_blank" rel="noopener noreferrer" className="flex flex-1 gap-3 sm:gap-4 rounded-xl border border-[#314d68] bg-[#182634] p-4 sm:p-6 items-center min-h-[80px] shadow-lg hover:bg-[#22344a] transition group">
                 {/* Timetable Icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" fill="currentColor" viewBox="0 0 24 24">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" className="sm:w-9 sm:h-9 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
                   <line x1="3" y1="8" x2="21" y2="8" stroke="currentColor" strokeWidth="2"/>
                   <rect x="7" y="12" width="2" height="2" fill="currentColor" />
                   <rect x="11" y="12" width="2" height="2" fill="currentColor" />
                   <rect x="15" y="12" width="2" height="2" fill="currentColor" />
                 </svg>
-                <h2 className="text-white text-xl font-bold leading-tight">Exam Timetable</h2>
+                <h2 className="text-white text-lg sm:text-xl font-bold leading-tight group-hover:text-blue-300 transition-colors">Exam Timetable</h2>
               </a>
             </div>
             {/* Campus Buzz */}
-            <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Campus Buzz</h2>
-            <div className="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex items-stretch p-4 gap-3">
+            <h2 className="text-white text-lg sm:text-xl md:text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-2 sm:pb-3 pt-3 sm:pt-4 md:pt-5">Campus Buzz</h2>
+            <div className="flex overflow-x-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x">
+              <div className="flex items-stretch p-4 gap-3 min-w-full">
                 {/* Event Card: Agnito 2026 */}
-                <div className="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40">
+                <div className="flex h-full flex-1 flex-col gap-3 sm:gap-4 rounded-lg min-w-[280px] sm:min-w-[320px] md:min-w-40 snap-start">
                   <div
                     className="w-full bg-center bg-no-repeat bg-cover rounded-lg flex flex-col"
-                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url(${festImage})` }}
+                    style={{ aspectRatio: '4/3', height: '160px', backgroundImage: `url(${festImage})` }}
                   ></div>
-                  <div>
-                    <p className="text-white text-lg md:text-2xl font-bold leading-tight">Agnito 2026</p>
-                    <p className="text-[#90adcb] text-base md:text-lg font-semibold leading-normal">Flagship fest of IIIT Sonepat – culture, tech & fun combined!</p>
+                  <div className="px-2">
+                    <p className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">Agnito 2026</p>
+                    <p className="text-[#90adcb] text-sm sm:text-base md:text-lg font-semibold leading-normal">Flagship fest of IIIT Sonepat – culture, tech & fun combined!</p>
                   </div>
                 </div>
 
                 {/* Event Card: AI Workshop */}
-                <div className="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40">
+                <div className="flex h-full flex-1 flex-col gap-3 sm:gap-4 rounded-lg min-w-[280px] sm:min-w-[320px] md:min-w-40 snap-start">
                   <div
                     className="w-full bg-center bg-no-repeat bg-cover rounded-lg flex flex-col"
-                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url(${workshopImage})` }}
+                    style={{ aspectRatio: '4/3', height: '160px', backgroundImage: `url(${workshopImage})` }}
                   ></div>
-                  <div>
-                    <p className="text-white text-lg md:text-2xl font-bold leading-tight">AI Workshop</p>
-                    <p className="text-[#90adcb] text-base md:text-lg font-semibold leading-normal">Dive into hands-on projects in the world of artificial intelligence.</p>
+                  <div className="px-2">
+                    <p className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">AI Workshop</p>
+                    <p className="text-[#90adcb] text-sm sm:text-base md:text-lg font-semibold leading-normal">Dive into hands-on projects in the world of artificial intelligence.</p>
                   </div>
                 </div>
 
                 {/* Event Card: Debate Competition */}
-                <div className="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40">
+                <div className="flex h-full flex-1 flex-col gap-3 sm:gap-4 rounded-lg min-w-[280px] sm:min-w-[320px] md:min-w-40 snap-start">
                   <div
                     className="w-full bg-center bg-no-repeat bg-cover rounded-lg flex flex-col"
-                    style={{ aspectRatio: '4/3', height: '180px', backgroundImage: `url(${debateImage})` }}
+                    style={{ aspectRatio: '4/3', height: '160px', backgroundImage: `url(${debateImage})` }}
                   ></div>
-                  <div>
-                    <p className="text-white text-lg md:text-2xl font-bold leading-tight">Inter-College Debate Competition</p>
-                    <p className="text-[#90adcb] text-base md:text-lg font-semibold leading-normal">Engage in a thrilling debate with students from top colleges.</p>
+                  <div className="px-2">
+                    <p className="text-white text-base sm:text-lg md:text-2xl font-bold leading-tight">Inter-College Debate Competition</p>
+                    <p className="text-[#90adcb] text-sm sm:text-base md:text-lg font-semibold leading-normal">Engage in a thrilling debate with students from top colleges.</p>
                   </div>
                 </div>
               </div>
             </div>
             {/* Student Achievements & Spotlights */}
-            <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5"> Student Spotlights</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-4 pb-8">
+            <h2 className="text-white text-lg sm:text-xl md:text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-2 sm:pb-3 pt-3 sm:pt-4 md:pt-5"> Student Spotlights</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-4 pb-6 sm:pb-8">
               {spotlightData.map((item, index) => (
                 <SpotlightCard key={index} {...item} />
               ))}
