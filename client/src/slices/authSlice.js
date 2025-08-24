@@ -42,11 +42,25 @@ export const checkAuthStatus = createAsyncThunk(
   "auth/checkAuthStatus",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/users/current");
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+      
+      const response = await api.get("/users/current", {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
       // Ensure consistent structure even if user is null from backend
       const user = response.data?.data?.user || null;
       return user;
     } catch (error) {
+      // Handle timeout and other errors gracefully
+      if (error.name === 'AbortError') {
+        console.log('Auth check timed out, treating as unauthenticated');
+        return null;
+      }
       // Don't reject, just return null if not authenticated
       return null;
     }

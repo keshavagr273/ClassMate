@@ -1,6 +1,6 @@
 // src/App.jsx
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -38,8 +38,19 @@ function App() {
   const { loading: authLoading, lastChecked } = useSelector(
     (state) => state.auth
   );
+  const [showLoading, setShowLoading] = useState(true);
 
-  if (authLoading && !lastChecked) {
+  useEffect(() => {
+    // Set a maximum loading time of 5 seconds
+    const loadingTimeout = setTimeout(() => {
+      setShowLoading(false);
+    }, 5000);
+
+    return () => clearTimeout(loadingTimeout);
+  }, []);
+
+  // Show loading screen only for first 5 seconds or until auth check completes
+  if ((authLoading && !lastChecked) && showLoading) {
     return <LoadingScreen />;
   }
 
