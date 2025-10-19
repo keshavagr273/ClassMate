@@ -38,7 +38,6 @@ export const fetchInternships = async (req, res) => {
 
     // Fetch items from the dataset
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
-    console.log(`📊 Found ${items.length} internships`);
 
     res.json({ 
       count: items.length, 

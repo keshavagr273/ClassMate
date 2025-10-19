@@ -27,28 +27,11 @@ const SkillExchangeDashboard = () => {
   // Get all available skills (for learn mode - all skills in the system)
   const allAvailableSkills = Array.from(new Set(skills.map(s => s.name)));
 
-  // Debug logging
-  console.log('=== DEBUGGING SKILL DATA ===');
-  console.log('Auth user:', user);
-  console.log('Auth isAuthenticated:', authIsAuthenticated);
-  console.log('SkillExchange isAuthenticated:', isAuthenticated);
-  console.log('Local teachSkills:', teachSkills);
-  console.log('Local learnSkills:', learnSkills);
-  console.log('Redux userSkills:', userSkills);
-  console.log('Redux teach skills:', userSkills.teach);
-  console.log('Redux learn skills:', userSkills.learn);
-  console.log('Current mode:', mode);
-  console.log('All skills from backend:', skills);
-  console.log('================================');
-
   useEffect(() => {
     if (authIsAuthenticated) {
-      console.log('User is authenticated, fetching skills...');
       dispatch(fetchSkills());
       dispatch(fetchMatches());
       dispatch(fetchUserSkills());
-    } else {
-      console.log('User is not authenticated, skipping skill fetch');
     }
     // Clear any global error state when component mounts
     dispatch(clearError());
@@ -60,22 +43,8 @@ const SkillExchangeDashboard = () => {
     const teachSkillsFromRedux = (userSkills.teach || []).map(skill => skill.Skill?.name || skill.name);
     const learnSkillsFromRedux = (userSkills.learn || []).map(skill => skill.Skill?.name || skill.name);
     
-    console.log('Processing skills from Redux userSkills:');
-    console.log('Redux userSkills:', userSkills);
-    console.log('Teach skills found:', teachSkillsFromRedux);
-    console.log('Learn skills found:', learnSkillsFromRedux);
-    
     setTeachSkills(teachSkillsFromRedux);
     setLearnSkills(learnSkillsFromRedux);
-  }, [userSkills]);
-
-  // Debug when userSkills changes
-  useEffect(() => {
-    console.log('=== userSkills CHANGED ===');
-    console.log('New userSkills:', userSkills);
-    console.log('Teach array:', userSkills.teach);
-    console.log('Learn array:', userSkills.learn);
-    console.log('========================');
   }, [userSkills]);
 
   const handleAddSkill = async () => {
@@ -165,12 +134,7 @@ const SkillExchangeDashboard = () => {
   };
 
   const handleDeleteTeachSkill = async (skillName) => {
-    if (!authIsAuthenticated) {
-      console.log('User not authenticated, cannot delete skill');
-      return;
-    }
-    
-    console.log('Attempting to delete skill:', skillName);
+    if (!authIsAuthenticated) return;
     
     try {
       // Find the UserSkill entry for this skill and type 'teach' from Redux userSkills
@@ -179,21 +143,16 @@ const SkillExchangeDashboard = () => {
       );
       
       if (!teachSkill) {
-        console.log('Skill not found in userSkills.teach:', skillName);
         setErrorMessage('Skill not found');
         setTimeout(() => setErrorMessage(''), 3000);
         return;
       }
-      
-      console.log('Found skill to delete:', teachSkill);
       
       // Call backend to delete using the UserSkill ID
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       await axios.delete(`${apiBase}/skill-exchange/user-skill/${teachSkill.id}`, {
         withCredentials: true
       });
-      
-      console.log('Skill deleted successfully from backend');
       
       // Refresh skills and matches
       dispatch(fetchSkills());
@@ -203,7 +162,6 @@ const SkillExchangeDashboard = () => {
       setErrorMessage('Skill deleted successfully!');
       setTimeout(() => setErrorMessage(''), 3000);
     } catch (error) {
-      console.error('Error deleting skill:', error);
       setErrorMessage('Failed to delete skill: ' + (error.response?.data?.message || error.message));
       setTimeout(() => setErrorMessage(''), 5000);
     }
@@ -338,7 +296,6 @@ const SkillExchangeDashboard = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('Delete button clicked for skill:', skill);
                           handleDeleteTeachSkill(skill);
                         }}
                         style={{ fontWeight: 'bold', fontSize: '20px', lineHeight: '1', boxShadow: '0 2px 8px rgba(255,0,80,0.15)' }}

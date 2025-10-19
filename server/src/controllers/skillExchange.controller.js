@@ -9,11 +9,9 @@ const addUserSkill = async (req, res) => {
   try {
     const { skillName, type } = req.body;
     const userId = req.user.id;
-    console.log('addUserSkill called with:', { skillName, type, userId });
 
     // Enhanced validation
     if (!skillName || !type || !userId) {
-      console.log('Missing field:', { skillName, type, userId });
       return res.status(400).json({ success: false, message: "skillName, type, and userId are required" });
     }
 
@@ -36,7 +34,6 @@ const addUserSkill = async (req, res) => {
     const [userSkill, created] = await UserSkill.findOrCreate({
       where: { userId: userId, SkillId: skill.id, type }
     });
-    console.log('UserSkill created:', userSkill, 'Was created:', created);
 
     if (!created) {
       return res.status(409).json({ 
@@ -75,7 +72,6 @@ const getAllSkills = async (req, res) => {
 const getUserSkills = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log('getUserSkills called for userId:', userId);
     
     const teach = await UserSkill.findAll({ 
       where: { userId: userId, type: 'teach' }, 
@@ -85,9 +81,6 @@ const getUserSkills = async (req, res) => {
       where: { userId: userId, type: 'learn' }, 
       include: [{ model: Skill, attributes: ['id', 'name'] }] 
     });
-    
-    console.log('Found teach skills:', teach.length, teach);
-    console.log('Found learn skills:', learn.length, learn);
     
     res.json({ success: true, teach, learn });
   } catch (error) {
@@ -197,18 +190,13 @@ const deleteUserSkill = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    console.log('deleteUserSkill called with:', { id, userId });
     
     const userSkill = await UserSkill.findOne({ where: { id, userId } });
     if (!userSkill) {
-      console.log('UserSkill not found for id:', id, 'userId:', userId);
       return res.status(404).json({ success: false, message: "Skill not found" });
     }
     
-    console.log('Found UserSkill to delete:', userSkill);
     await userSkill.destroy();
-    console.log('UserSkill deleted successfully');
-    
     res.json({ success: true, message: "Skill deleted" });
   } catch (error) {
     console.error("Error in deleteUserSkill:", error);

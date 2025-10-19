@@ -19,12 +19,9 @@ export const fetchSkills = createAsyncThunk('skillExchange/fetchSkills', async (
 
 export const fetchUserSkills = createAsyncThunk('skillExchange/fetchUserSkills', async (_, { rejectWithValue }) => {
   try {
-    console.log('fetchUserSkills: Making API call to /my-skills');
     const res = await api.get('/my-skills');
-    console.log('fetchUserSkills: API response:', res.data);
     return res.data;
   } catch (error) {
-    console.error('fetchUserSkills: API error:', error);
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch user skills');
   }
 });
@@ -134,9 +131,7 @@ const skillExchangeSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchUserSkills.fulfilled, (state, action) => {
-        console.log('Redux: fetchUserSkills.fulfilled - action.payload:', action.payload);
         state.userSkills = { teach: action.payload.teach || [], learn: action.payload.learn || [] };
-        console.log('Redux: Updated state.userSkills:', state.userSkills);
         state.loading = false;
       })
       .addCase(fetchUserSkills.rejected, (state, action) => {

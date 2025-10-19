@@ -51,7 +51,6 @@ export default function InternConnect() {
       });
       
       setInternships(data.internships);
-      console.log(`✅ Found ${data.count} internships`);
     } catch (err) {
       console.error('❌ Error fetching internships:', err);
       

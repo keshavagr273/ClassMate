@@ -9,8 +9,6 @@ import Subject from "../models/subject.model.js";
 import UserSubject from "../models/user_subject.model.js";
 dotenv.config();
 
-console.log(process.env.CLIENT_URL)
-
 const getCurrentUTCDateTime = () => {
   const now = new Date();
   return now.toISOString().slice(0, 19).replace("T", " ");
@@ -71,8 +69,6 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     });
   }
 
-  console.log(`New user registered at ${getCurrentUTCDateTime()}`);
-
   res
     .status(201)
     .json(
@@ -109,8 +105,6 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     cookieOptions.domain = "classmate-o06h.onrender.com";
   }
   res.cookie("token", token, cookieOptions);
-
-  console.log(`User ${email} logged in at ${getCurrentUTCDateTime()}`);
 
   res
     .status(200)
@@ -155,9 +149,6 @@ export const updateUser = asyncHandler(async (req, res, next) => {
   if (hostel !== undefined) user.hostel = hostel;
 
   await user.save();
-  console.log(
-    `User ${user.email} updated profile at ${getCurrentUTCDateTime()}`
-  );
 
   // Reload user with roles to ensure associations are up-to-date
   const updatedUser = await User.findByPk(userId, { });
@@ -178,10 +169,6 @@ export const logoutUser = asyncHandler(async (req, res, next) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
-
-  console.log(
-    `User ${req.user.email} logged out at ${getCurrentUTCDateTime()}`
-  );
 
   res.status(200).json(new ApiResponse(200, null, "Logged out successfully"));
 });

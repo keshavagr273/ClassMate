@@ -227,13 +227,11 @@ export const getUnreadNotificationCount = asyncHandler(async (req, res) => {
     throw new ApiError("User not authenticated", 401);
   }
   const userId = req.user.id;
-  console.log(`[Backend] Attempting getUnreadNotificationCount for userId: ${userId}`);
 
   try {
     const unreadCount = await Notification.count({
       where: { userId, is_read: false },
     });
-    console.log(`[Backend] Found unread count: ${unreadCount} for userId: ${userId}`);
 
     res.status(200).json({
       success: true,
