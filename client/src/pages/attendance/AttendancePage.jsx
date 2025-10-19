@@ -9,7 +9,6 @@ import { FiAlertTriangle, FiBookOpen, FiEdit2 } from "react-icons/fi";
 import { MdMenuBook, MdAnalytics, MdEvent, MdEdit } from "react-icons/md";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import bookImage from "../../public/assets/images/Book.jpg";
 
 // --- Redux Actions ---
 import {
@@ -340,21 +339,7 @@ const AttendancePage = () => {
           onUnenrollSubject={handleUnenroll}
           unenrollLoading={unenrollLoading}
         />
-        {/* Subject Overview */}
-        <div className="bg-[#121926] rounded-xl shadow-lg p-6 flex flex-col sm:flex-row justify-between items-center mb-8">
-          <div>
-            <h2 className="text-md font-semibold text-white">Subject Overview</h2>
-            <p className="text-sm mt-2 text-gray-300">{selectedSubjectForDetails?.name}<br /><span className="text-xs text-gray-500">Attendance Rate: {percentageData ? percentageData.percentage.toFixed(1) : '0.0'}%</span></p>
-            <button className="mt-3 bg-white text-black px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition" aria-label="View Subject Details">View Details</button>
-          </div>
-          <div>
-            <img src={bookImage} className="w-32 rounded-md mt-6 sm:mt-0" alt="Book" />
-          </div>
-        </div>
-        {/* Add Attendance Button */}
-        <div className="flex justify-end mb-6">
-          <button className="bg-sky-200 text-black font-semibold px-5 py-2 rounded-md shadow hover:bg-sky-300 transition" onClick={() => selectedSubjectId && openAttendanceModal("create", null, new Date())} disabled={!selectedSubjectId} aria-label="Add Attendance">Add Attendance</button>
-        </div>
+        
         {/* Divider */}
         <hr className="border-gray-800 mb-6" />
         {/* Selection Area */}

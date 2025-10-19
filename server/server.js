@@ -95,6 +95,10 @@ import { connectDb } from "./src/db/db.js";
 
 const startServer = async () => {
   try {
+    console.log("Initializing associations...");
+    initializeAssociations();
+    console.log("Associations initialized!");
+    
     console.log("Connecting to database...");
     await sequelize.sync({ alter: true });
     console.log("Database & tables have been updated!");
@@ -113,8 +117,6 @@ const startServer = async () => {
   }
 };
 
-initializeAssociations();
-
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   process.exit(1);
@@ -122,7 +124,8 @@ process.on("uncaughtException", (error) => {
 
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled Rejection:", error);
-  process.exit(1);
+  // Don't exit the process, just log the error
+  // process.exit(1);
 });
 
 startServer();

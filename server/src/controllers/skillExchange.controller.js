@@ -11,9 +11,24 @@ const addUserSkill = async (req, res) => {
     const userId = req.user.id;
     console.log('addUserSkill called with:', { skillName, type, userId });
 
+    // Enhanced validation
     if (!skillName || !type || !userId) {
       console.log('Missing field:', { skillName, type, userId });
       return res.status(400).json({ success: false, message: "skillName, type, and userId are required" });
+    }
+
+    // Validate skill name
+    if (typeof skillName !== 'string' || skillName.trim().length === 0) {
+      return res.status(400).json({ success: false, message: "Skill name must be a non-empty string" });
+    }
+
+    if (skillName.trim().length > 100) {
+      return res.status(400).json({ success: false, message: "Skill name must be less than 100 characters" });
+    }
+
+    // Validate type
+    if (!['teach', 'learn'].includes(type)) {
+      return res.status(400).json({ success: false, message: "Type must be either 'teach' or 'learn'" });
     }
 
     let skill = await Skill.findOne({ where: { name: skillName } });
@@ -24,7 +39,11 @@ const addUserSkill = async (req, res) => {
     console.log('UserSkill created:', userSkill, 'Was created:', created);
 
     if (!created) {
-      return res.status(409).json({ success: false, message: "Skill already added for this type" });
+      return res.status(409).json({ 
+        success: false, 
+        message: `You have already added "${skillName}" as a ${type} skill`,
+        code: "SKILL_ALREADY_EXISTS"
+      });
     }
     res.json({ success: true, userSkill });
   } catch (error) {
@@ -35,77 +54,142 @@ const addUserSkill = async (req, res) => {
 
 // Get all skills (for search/filter)
 const getAllSkills = async (req, res) => {
-  const skills = await Skill.findAll({
-    include: [
-      {
-        model: UserSkill,
-        attributes: ['id', 'type', 'userId'],
-      }
-    ]
-  });
-  res.json({ success: true, skills });
+  try {
+    const skills = await Skill.findAll({
+      include: [
+        {
+          model: UserSkill,
+          attributes: ['id', 'type', 'userId'],
+          as: 'userSkills' // Use the correct association alias
+        }
+      ]
+    });
+    res.json({ success: true, skills });
+  } catch (error) {
+    console.error("Error in getAllSkills:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };
 
 // Get user's teach/learn skills
 const getUserSkills = async (req, res) => {
-  const userId = req.user.id;
-  const teach = await UserSkill.findAll({ where: { userId: userId, type: 'teach' }, include: Skill });
-  const learn = await UserSkill.findAll({ where: { userId: userId, type: 'learn' }, include: Skill });
-  res.json({ success: true, teach, learn });
+  try {
+    const userId = req.user.id;
+    console.log('getUserSkills called for userId:', userId);
+    
+    const teach = await UserSkill.findAll({ 
+      where: { userId: userId, type: 'teach' }, 
+      include: [{ model: Skill, attributes: ['id', 'name'] }] 
+    });
+    const learn = await UserSkill.findAll({ 
+      where: { userId: userId, type: 'learn' }, 
+      include: [{ model: Skill, attributes: ['id', 'name'] }] 
+    });
+    
+    console.log('Found teach skills:', teach.length, teach);
+    console.log('Found learn skills:', learn.length, learn);
+    
+    res.json({ success: true, teach, learn });
+  } catch (error) {
+    console.error("Error in getUserSkills:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };
 
 // Find matches for current user
 const getSkillMatches = async (req, res) => {
-  const userId = req.user.id;
-  // Find skills user wants to learn
-  const learnSkills = await UserSkill.findAll({ where: { userId: userId, type: 'learn' } });
-  const skillIds = learnSkills.map(us => us.SkillId);
-  // Find users who can teach those skills
-  const matches = await UserSkill.findAll({
-    where: { SkillId: skillIds, type: 'teach' },
-    include: [
-      { model: User, attributes: ['id', 'name', 'email', 'branch', 'semester'] },
-      Skill
-    ]
-  });
-  res.json({ success: true, matches });
+  try {
+    const userId = req.user.id;
+    // Find skills user wants to learn
+    const learnSkills = await UserSkill.findAll({ where: { userId: userId, type: 'learn' } });
+    const skillIds = learnSkills.map(us => us.SkillId);
+    
+    if (skillIds.length === 0) {
+      return res.json({ success: true, matches: [] });
+    }
+    
+    // Find users who can teach those skills
+    const matches = await UserSkill.findAll({
+      where: { SkillId: skillIds, type: 'teach' },
+      include: [
+        { model: User, attributes: ['id', 'name', 'email', 'branch', 'semester'] },
+        { model: Skill, attributes: ['id', 'name'] }
+      ]
+    });
+    res.json({ success: true, matches });
+  } catch (error) {
+    console.error("Error in getSkillMatches:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };
 
 // Send a request to connect
 const sendSkillRequest = async (req, res) => {
-  const { recipientId, skillId, message } = req.body;
-  const requesterId = req.user.id;
+  try {
+    const { recipientId, skillId, message } = req.body;
+    const requesterId = req.user.id;
 
-  // Get requester details
-  const requester = await User.findByPk(requesterId);
-  // Get skill details
-  const skill = await Skill.findByPk(skillId);
+    // Validation
+    if (!recipientId || !skillId) {
+      return res.status(400).json({ success: false, message: "recipientId and skillId are required" });
+    }
 
-  const request = await SkillRequest.create({ requesterId, recipientId, SkillId: skillId, message });
+    if (recipientId === requesterId) {
+      return res.status(400).json({ success: false, message: "Cannot send request to yourself" });
+    }
 
-  // Create notification for the recipient
-  await Notification.create({
-    userId: recipientId,
-    title: 'New Skill Exchange Request',
-    message: `${requester.name} (${requester.email}) wants to learn (${skill?.name || 'a skill'}) from you.`,
-    type: 'skill_exchange',
-    is_read: false
-  });
+    // Get requester details
+    const requester = await User.findByPk(requesterId);
+    if (!requester) {
+      return res.status(404).json({ success: false, message: "Requester not found" });
+    }
 
-  res.json({ success: true, request });
+    // Get recipient details
+    const recipient = await User.findByPk(recipientId);
+    if (!recipient) {
+      return res.status(404).json({ success: false, message: "Recipient not found" });
+    }
+
+    // Get skill details
+    const skill = await Skill.findByPk(skillId);
+    if (!skill) {
+      return res.status(404).json({ success: false, message: "Skill not found" });
+    }
+
+    const request = await SkillRequest.create({ requesterId, recipientId, SkillId: skillId, message });
+
+    // Create notification for the recipient
+    await Notification.create({
+      userId: recipientId,
+      title: 'New Skill Exchange Request',
+      message: `${requester.name} (${requester.email}) wants to learn (${skill?.name || 'a skill'}) from you.`,
+      type: 'skill_exchange',
+      is_read: false
+    });
+
+    res.json({ success: true, request });
+  } catch (error) {
+    console.error("Error in sendSkillRequest:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };
 
 // Get requests for user
 const getSkillRequests = async (req, res) => {
-  const userId = req.user.id;
-  const requests = await SkillRequest.findAll({
-    where: { recipientId: userId },
-    include: [
-      { model: User, as: 'requester', attributes: ['id', 'name', 'email'] },
-      Skill
-    ]
-  });
-  res.json({ success: true, requests });
+  try {
+    const userId = req.user.id;
+    const requests = await SkillRequest.findAll({
+      where: { recipientId: userId },
+      include: [
+        { model: User, as: 'requester', attributes: ['id', 'name', 'email'] },
+        { model: Skill, attributes: ['id', 'name'] }
+      ]
+    });
+    res.json({ success: true, requests });
+  } catch (error) {
+    console.error("Error in getSkillRequests:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };
 
 // Delete a user skill
@@ -113,11 +197,18 @@ const deleteUserSkill = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    console.log('deleteUserSkill called with:', { id, userId });
+    
     const userSkill = await UserSkill.findOne({ where: { id, userId } });
     if (!userSkill) {
+      console.log('UserSkill not found for id:', id, 'userId:', userId);
       return res.status(404).json({ success: false, message: "Skill not found" });
     }
+    
+    console.log('Found UserSkill to delete:', userSkill);
     await userSkill.destroy();
+    console.log('UserSkill deleted successfully');
+    
     res.json({ success: true, message: "Skill deleted" });
   } catch (error) {
     console.error("Error in deleteUserSkill:", error);

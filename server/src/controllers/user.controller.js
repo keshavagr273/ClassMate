@@ -50,11 +50,10 @@ export const registerUser = asyncHandler(async (req, res, next) => {
   });
 
   const defaultSubjects = [
-    "Data Structure",
-    "Operating System",
-    "Mathematics",
     "Computer Networks",
-    "Compiler Design"
+    "Operating System", 
+    "DBMS",
+    "Information Security"
   ];
   const subjectRecords = [];
   for (const subjectName of defaultSubjects) {

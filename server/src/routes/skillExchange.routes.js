@@ -5,7 +5,7 @@ import auth from '../middlewares/auth.middleware.js';
 const router = express.Router();
 
 router.post('/add-skill', auth, skillExchangeController.addUserSkill);
-router.get('/skills', skillExchangeController.getAllSkills);
+router.get('/skills', auth, skillExchangeController.getAllSkills);
 router.get('/my-skills', auth, skillExchangeController.getUserSkills);
 router.get('/matches', auth, skillExchangeController.getSkillMatches);
 router.post('/request', auth, skillExchangeController.sendSkillRequest);

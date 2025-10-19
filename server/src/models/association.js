@@ -106,6 +106,10 @@ export const initializeAssociations = () => {
   // UserSkill associations
   UserSkill.belongsTo(User, { foreignKey: "userId" });
   UserSkill.belongsTo(Skill, { foreignKey: "SkillId" });
+  
+  // Add hasMany associations for direct access
+  Skill.hasMany(UserSkill, { foreignKey: "SkillId", as: "userSkills" });
+  User.hasMany(UserSkill, { foreignKey: "userId", as: "userSkills" });
 
   // SkillRequest associations
   SkillRequest.belongsTo(User, { as: "requester", foreignKey: "requesterId" });

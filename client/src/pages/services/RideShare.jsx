@@ -35,6 +35,9 @@ const RideShare = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRide, setEditingRide] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedRide, setSelectedRide] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -73,6 +76,23 @@ const RideShare = () => {
     }
   };
 
+  const handleViewDetails = (ride) => {
+    setSelectedRide(ride);
+    setDetailsModalOpen(true);
+  };
+
+  const handleJoin = async (rideId) => {
+    setActionLoading(true);
+    try {
+      await dispatch(joinRide(rideId)).unwrap();
+      setDetailsModalOpen(false);
+    } catch (err) {
+      alert(err.message || 'Failed to join ride.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
 
 
   const handleUnjoin = async (rideId) => {
@@ -103,6 +123,14 @@ const RideShare = () => {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleDeleteConfirm = (ride) => {
+    setConfirmDelete(ride);
+  };
+
+  const handleDeleteCancel = () => {
+    setConfirmDelete(null);
   };
 
   const clearAllFilters = () => {
@@ -210,12 +238,31 @@ const RideShare = () => {
                         <p className="text-white text-base font-bold leading-tight">{ride.pickupLocation} to {ride.dropLocation}</p>
                         <p className="text-[#9eadbd] text-sm font-normal leading-normal">Date: {ride.departureDateTime ? new Date(ride.departureDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'} Time: {ride.departureDateTime ? new Date(ride.departureDateTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : 'Unknown'} Seats Available: {ride.availableSeats}</p>
                       </div>
-                      <button
-                        className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 flex-row-reverse bg-[#2b3640] text-white text-sm font-medium leading-normal w-fit"
-                        onClick={() => handleViewDetails(ride)}
-                      >
-                        <span className="truncate">View Details</span>
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 flex-row-reverse bg-[#2b3640] text-white text-sm font-medium leading-normal w-fit"
+                          onClick={() => handleViewDetails(ride)}
+                        >
+                          <span className="truncate">View Details</span>
+                        </button>
+                        {ride.creatorId === user?.id && (
+                          <>
+                            <button
+                              className="flex min-w-[60px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-3 bg-blue-600 text-white text-sm font-medium leading-normal hover:bg-blue-500 transition"
+                              onClick={() => handleEdit(ride)}
+                            >
+                              <span className="truncate">Edit</span>
+                            </button>
+                            <button
+                              className="flex min-w-[60px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-3 bg-red-600 text-white text-sm font-medium leading-normal hover:bg-red-500 transition"
+                              onClick={() => handleDeleteConfirm(ride)}
+                              disabled={actionLoading}
+                            >
+                              <span className="truncate">{actionLoading ? 'Deleting...' : 'Delete'}</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div
                       className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl flex-1"
@@ -228,13 +275,55 @@ const RideShare = () => {
             {/* Offer Ride Modal */}
             <RideFormModal
               isOpen={isFormOpen}
-              onClose={() => {
+              onCancel={() => {
                 setIsFormOpen(false);
                 setEditingRide(null);
               }}
               onSubmit={handleFormSubmit}
               editingRide={editingRide}
             />
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+              {confirmDelete && (
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  exit={{ opacity: 0 }} 
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                >
+                  <motion.div 
+                    initial={{ scale: 0.95, opacity: 0 }} 
+                    animate={{ scale: 1, opacity: 1 }} 
+                    exit={{ scale: 0.95, opacity: 0 }} 
+                    className="bg-[#2b3640] p-6 rounded-xl shadow-xl max-w-md w-full border border-white/10 flex flex-col gap-4 relative"
+                  >
+                    <h3 className="text-xl font-bold text-white text-center">Confirm Delete</h3>
+                    <p className="text-white/80 text-center">
+                      Are you sure you want to delete this ride? This action cannot be undone.
+                    </p>
+                    <div className="flex gap-3 justify-end mt-4">
+                      <button 
+                        className="px-4 py-2 text-sm rounded-lg bg-gray-600 text-white hover:bg-gray-500 transition"
+                        onClick={handleDeleteCancel}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
+                        onClick={() => {
+                          handleDelete(confirmDelete.id);
+                          setConfirmDelete(null);
+                        }}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Ride Details Modal */}
             <AnimatePresence>
               {detailsModalOpen && selectedRide && (

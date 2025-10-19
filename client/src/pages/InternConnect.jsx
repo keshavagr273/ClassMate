@@ -37,13 +37,34 @@ export default function InternConnect() {
     setLoading(true);
     setError('');
     setInternships([]);
+    
     try {
       const payload = { ...filters, max_results: 12 };
       const apiBase = import.meta.env.VITE_API_URL || '';
-      const { data } = await axios.post(`${apiBase}/internships/fetch`, payload);
+      
+      // Set a longer timeout for the scraping request (3 minutes)
+      const { data } = await axios.post(`${apiBase}/internships/fetch`, payload, {
+        timeout: 180000, // 3 minutes timeout
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
       setInternships(data.internships);
+      console.log(`✅ Found ${data.count} internships`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch internships.');
+      console.error('❌ Error fetching internships:', err);
+      
+      let errorMessage = 'Failed to fetch internships.';
+      if (err.code === 'ECONNABORTED') {
+        errorMessage = 'Request timed out. The scraping process is taking longer than expected. Please try again.';
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -113,18 +134,35 @@ export default function InternConnect() {
           </div>
           <button
             type="submit"
-            className="col-span-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl flex items-center gap-2 justify-center transition-all duration-300"
+            className="col-span-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl flex items-center gap-2 justify-center transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? (
-              <Loader2 className="animate-spin w-5 h-5" />
+              <>
+                <Loader2 className="animate-spin w-5 h-5" />
+                <span>Scraping internships...</span>
+              </>
             ) : (
-              <Filter className="w-5 h-5" />
+              <>
+                <Filter className="w-5 h-5" />
+                <span>Find Internships</span>
+              </>
             )}
-            Find Internships
           </button>
         </form>
         {error && <div className="mt-4 text-red-500 font-semibold">{error}</div>}
+        
+        {loading && (
+          <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
+            <div className="flex items-center gap-3 text-blue-300">
+              <Loader2 className="animate-spin w-5 h-5" />
+              <div>
+                <p className="font-semibold">Scraping internships from Internshala...</p>
+                <p className="text-sm text-blue-400">This may take 30-60 seconds. Please wait...</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {internships.length > 0 && (
