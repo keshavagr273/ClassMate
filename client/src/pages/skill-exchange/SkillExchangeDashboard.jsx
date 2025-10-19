@@ -42,8 +42,7 @@ const SkillExchangeDashboard = () => {
     // Sync teachSkills and learnSkills with Redux userSkills state
     const teachSkillsFromRedux = (userSkills.teach || []).map(skill => skill.Skill?.name || skill.name);
     const learnSkillsFromRedux = (userSkills.learn || []).map(skill => skill.Skill?.name || skill.name);
-    
-    setTeachSkills(teachSkillsFromRedux);
+        setTeachSkills(teachSkillsFromRedux);
     setLearnSkills(learnSkillsFromRedux);
   }, [userSkills]);
 

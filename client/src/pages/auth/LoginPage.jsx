@@ -126,7 +126,8 @@ const LoginPage = () => {
                 />
                 {tab === "signup" && (
                   <p className="text-[#92adc9] text-sm font-normal leading-normal mt-2">
-                    EMAIL FORMAT: NAME.REGNO@iiitsonepat.ac.in
+                    EMAIL FORMAT: NAME.ROLLNO@iiitsonepat.ac.in<br/>
+                    (ROLLNO should be your 8-digit roll number)
                   </p>
                 )}
               </label>
