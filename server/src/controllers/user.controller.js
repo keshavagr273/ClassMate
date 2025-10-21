@@ -7,6 +7,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import dotenv from "dotenv";
 import Subject from "../models/subject.model.js";
 import UserSubject from "../models/user_subject.model.js";
+import sequelize from "../db/db.js";
 dotenv.config();
 
 const getCurrentUTCDateTime = () => {
@@ -219,5 +220,40 @@ export const getAllUsers = asyncHandler(async (req, res, next) => {
  
     console.error("Error fetching all users:", error);
     return next(new ApiError("Failed to retrieve users", 500));
+  }
+});
+
+// Database health check
+export const checkDatabaseHealth = asyncHandler(async (req, res) => {
+  try {
+    // Test database connection
+    await sequelize.authenticate();
+    
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        { 
+          status: "healthy",
+          database: "connected",
+          timestamp: new Date().toISOString()
+        },
+        "Database connection is healthy"
+      )
+    );
+  } catch (error) {
+    console.error("Database health check failed:", error);
+    
+    res.status(503).json(
+      new ApiResponse(
+        503,
+        { 
+          status: "unhealthy",
+          database: "disconnected",
+          error: error.message,
+          timestamp: new Date().toISOString()
+        },
+        "Database connection failed"
+      )
+    );
   }
 });

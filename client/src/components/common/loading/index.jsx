@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 
 const LoadingScreen = () => {
   const [progress, setProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("Connecting to database...");
 
   useEffect(() => {
-    // Simulate progress over 5 seconds
+    // Simulate progress and update messages
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) return prev; // Stop at 90% until auth completes
@@ -12,8 +13,21 @@ const LoadingScreen = () => {
       });
     }, 500);
 
-    return () => clearInterval(interval);
-  }, []);
+    // Update loading message based on progress
+    const messageInterval = setInterval(() => {
+      setLoadingMessage(prev => {
+        if (progress < 30) return "Connecting to database...";
+        if (progress < 60) return "Initializing application...";
+        if (progress < 90) return "Loading user data...";
+        return "Almost ready...";
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(messageInterval);
+    };
+  }, [progress]);
 
   return (
     <>
@@ -82,7 +96,7 @@ const LoadingScreen = () => {
       <div id="loader">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <div className="loading-text">Loading...</div>
+          <div className="loading-text">{loadingMessage}</div>
           <div className="progress-bar">
             <div className="progress-fill"></div>
           </div>

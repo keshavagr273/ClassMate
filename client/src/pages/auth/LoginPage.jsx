@@ -10,6 +10,7 @@ import {
 } from "../../slices/authSlice";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -18,6 +19,7 @@ const LoginPage = () => {
   const loading = useSelector((state) => state.auth.loading);
   const navigate = useNavigate();
   const [tab, setTab] = useState("login");
+  const [showPassword, setShowPassword] = useState(false);
   const toastIdRef = useRef(null);
 
   useEffect(() => {
@@ -135,14 +137,23 @@ const LoginPage = () => {
             <div className="max-w-[480px] w-full px-4 py-3 mx-auto">
               <label className="flex flex-col min-w-40">
                 <p className="text-white text-2xl font-bold leading-normal pb-2">Password</p>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  className="form-input w-full rounded-xl text-white focus:outline-0 focus:ring-0 border border-[#324d67] bg-[#192633] focus:border-[#324d67] h-16 placeholder:text-[#92adc9] p-[22px] text-xl font-normal leading-normal placeholder:text-lg placeholder:text-[#92adc9]"
-                  required
-                  autoComplete={tab === "login" ? "current-password" : "new-password"}
-                />
+                <div className="relative">
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    className="form-input w-full rounded-xl text-white focus:outline-0 focus:ring-0 border border-[#324d67] bg-[#192633] focus:border-[#324d67] h-16 placeholder:text-[#92adc9] p-[22px] pr-16 text-xl font-normal leading-normal placeholder:text-lg placeholder:text-[#92adc9]"
+                    required
+                    autoComplete={tab === "login" ? "current-password" : "new-password"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#92adc9] hover:text-white transition-colors duration-200"
+                  >
+                    {showPassword ? <EyeOff size={24} /> : <Eye size={24} />}
+                  </button>
+                </div>
               </label>
             </div>
             <div className="flex flex-col items-center w-full px-4 py-3 gap-2">

@@ -9,10 +9,14 @@ import {
   registerUser,
   loginUser,
   getUserById,
-  getAllUsers
+  getAllUsers,
+  checkDatabaseHealth
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
+
+// Health check route
+router.get("/health", checkDatabaseHealth);
 
 router.post("/signup", emailMiddleware, registerUser);
 router.post("/login", emailMiddleware, loginUser);

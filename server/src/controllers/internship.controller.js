@@ -17,6 +17,7 @@ export const fetchInternships = async (req, res) => {
       max_results: 12,
       job_category,
       location,
+      pages_to_scrape: 10,
       work_from_home: work_from_home === 'true' || work_from_home === true,
       stipend
     };

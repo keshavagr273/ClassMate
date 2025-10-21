@@ -8,6 +8,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useSelector } from "react-redux";
+import axios from "axios";
 
 // Layout & Common Components
 import NavBar from "./components/common/layout/NavBar";
@@ -39,18 +40,98 @@ function App() {
     (state) => state.auth
   );
   const [showLoading, setShowLoading] = useState(true);
+  const [dbConnected, setDbConnected] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    // Set a maximum loading time of 5 seconds
-    const loadingTimeout = setTimeout(() => {
+    // Check if this is the initial app load (not a page reload)
+    const hasLoadedBefore = sessionStorage.getItem('appHasLoaded');
+    
+    if (hasLoadedBefore) {
+      // This is a page reload, skip database check
+      console.log("🔄 Page reload detected, skipping database health check");
+      setDbConnected(true);
+      setIsInitialLoad(false);
       setShowLoading(false);
-    }, 5000);
+      return;
+    }
+
+    // This is the initial load, check database connection
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    const checkDatabaseConnection = async () => {
+      try {
+        // Try multiple possible URLs to handle different configurations
+        const possibleUrls = [
+          'http://localhost:5000/api/users/health',
+          'http://localhost:5000/users/health',
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/health`,
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/users/health`
+        ];
+        
+        console.log("🔍 Initial load - Checking database health...");
+        
+        for (const url of possibleUrls) {
+          try {
+            console.log(`Trying: ${url}`);
+            const response = await axios.get(url, {
+              timeout: 3000
+            });
+            
+            if (response.status === 200) {
+              setDbConnected(true);
+              setIsInitialLoad(false);
+              console.log("✅ Database connection established at:", url);
+              return; // Success, exit the function
+            }
+          } catch (urlError) {
+            console.log(`❌ Failed at ${url}:`, urlError.message);
+            continue; // Try next URL
+          }
+        }
+        
+        // If we get here, all URLs failed
+        throw new Error("All health check URLs failed");
+        
+      } catch (error) {
+        console.error("❌ Database connection failed:", error.message);
+        retryCount++;
+        
+        if (retryCount < maxRetries) {
+          console.log(`🔄 Retrying database connection (${retryCount}/${maxRetries})...`);
+          setTimeout(checkDatabaseConnection, 2000);
+        } else {
+          console.log("⚠️ Max retries reached. Proceeding without database health check.");
+          setDbConnected(true); // Proceed anyway after max retries
+          setIsInitialLoad(false);
+        }
+      }
+    };
+
+    // Start checking database connection only on initial load
+    checkDatabaseConnection();
+
+    // Set a maximum loading time of 10 seconds as fallback
+    const loadingTimeout = setTimeout(() => {
+      console.log("⏰ Loading timeout reached. Proceeding with app load.");
+      setDbConnected(true);
+      setIsInitialLoad(false);
+      setShowLoading(false);
+    }, 10000);
 
     return () => clearTimeout(loadingTimeout);
   }, []);
 
-  // Show loading screen only for first 5 seconds or until auth check completes
-  if ((authLoading && !lastChecked) && showLoading) {
+  // Mark app as loaded in session storage
+  useEffect(() => {
+    if (dbConnected && !isInitialLoad) {
+      sessionStorage.setItem('appHasLoaded', 'true');
+    }
+  }, [dbConnected, isInitialLoad]);
+
+  // Show loading screen only during initial load until database is connected AND auth check completes
+  if (isInitialLoad && ((authLoading && !lastChecked) || !dbConnected || showLoading)) {
     return <LoadingScreen />;
   }
 
