@@ -16,6 +16,8 @@ import enrollmentRoutes from "./src/routes/enrollment.routes.js"
 import attendanceRoutes from "./src/routes/attendance.routes.js"
 import skillExchangeRoutes from './src/routes/skillExchange.routes.js';
 import internshipRoutes from './src/routes/internship.routes.js';
+import performanceMiddleware from './src/middlewares/performance.middleware.js';
+import metrics from './src/utils/metrics.js';
 
 dotenv.config({ path: "./.env" });
 const app = express();
@@ -46,6 +48,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 
+// Performance monitoring
+app.use(performanceMiddleware);
+
 // Set Cache-Control header for all API responses
 app.use('/api', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -54,6 +59,15 @@ app.use('/api', (req, res, next) => {
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
+});
+
+// Performance metrics endpoint
+app.get("/api/metrics", (req, res) => {
+  res.json({
+    success: true,
+    data: metrics.getStats(),
+    message: "Performance metrics retrieved successfully"
+  });
 });
 
 // Use routes
