@@ -15,9 +15,9 @@ if (process.env.DATABASE_URL) {
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false, // Supabase requires SSL
+        rejectUnauthorized: false,
       },
-      family: 4, // 👈 Force IPv4 to fix ENETUNREACH on Render
+      family: 4, 
     },
     pool: {
       max: 10,
@@ -61,7 +61,7 @@ export const connectDb = asyncHandler(async () => {
     await sequelize.authenticate();
     console.log("Database Connection has been established successfully.");
   } catch (error) {
-    console.error("❌ Database connection failed:");
+    console.error("Database connection failed:");
     console.error("Error:", error.message);
     console.error("Code:", error.code);
     console.error("Errno:", error.errno);

@@ -46,7 +46,7 @@ function App() {
   useEffect(() => {
     // Check if this is the initial app load (not a page reload)
     const hasLoadedBefore = sessionStorage.getItem('appHasLoaded');
-    
+
     if (hasLoadedBefore) {
       // This is a page reload, skip database check
       console.log("🔄 Page reload detected, skipping database health check");
@@ -62,23 +62,24 @@ function App() {
 
     const checkDatabaseConnection = async () => {
       try {
-        // Try multiple possible URLs to handle different configurations
+        // Normalize the base URL
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+        // Try multiple possible URLs to handle different configurations without doubling /api
         const possibleUrls = [
-          'http://localhost:5000/api/users/health',
-          'http://localhost:5000/users/health',
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/health`,
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/users/health`
+          `${baseUrl}/users/health`,                    // Normal way: /api/users/health
+          baseUrl.replace(/\/api$/, '') + '/users/health' // Fallback without /api
         ];
-        
+
         console.log("🔍 Initial load - Checking database health...");
-        
+
         for (const url of possibleUrls) {
           try {
             console.log(`Trying: ${url}`);
             const response = await axios.get(url, {
               timeout: 3000
             });
-            
+
             if (response.status === 200) {
               setDbConnected(true);
               setIsInitialLoad(false);
@@ -90,14 +91,14 @@ function App() {
             continue; // Try next URL
           }
         }
-        
+
         // If we get here, all URLs failed
         throw new Error("All health check URLs failed");
-        
+
       } catch (error) {
         console.error("❌ Database connection failed:", error.message);
         retryCount++;
-        
+
         if (retryCount < maxRetries) {
           console.log(`🔄 Retrying database connection (${retryCount}/${maxRetries})...`);
           setTimeout(checkDatabaseConnection, 2000);

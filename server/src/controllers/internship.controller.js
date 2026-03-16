@@ -22,7 +22,7 @@ export const fetchInternships = async (req, res) => {
       stipend
     };
 
-    console.log("🚀 Starting internship scraping with input:", input);
+    console.log("Starting internship scraping with input:", input);
 
     // Set timeout for the entire operation (2 minutes)
     const timeoutPromise = new Promise((_, reject) => {
@@ -35,7 +35,7 @@ export const fetchInternships = async (req, res) => {
       .call(input);
 
     const run = await Promise.race([scrapingPromise, timeoutPromise]);
-    console.log("✅ Scraping completed, fetching results...");
+    console.log("Scraping completed, fetching results...");
 
     // Fetch items from the dataset
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
@@ -46,7 +46,7 @@ export const fetchInternships = async (req, res) => {
       message: "Internships fetched successfully"
     });
   } catch (error) {
-    console.error("❌ Error running scraper:", error.message);
+    console.error("Error running scraper:", error.message);
     
     // Provide more specific error messages
     let errorMessage = "Failed to fetch internships";

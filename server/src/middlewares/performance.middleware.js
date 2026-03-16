@@ -15,7 +15,7 @@ export const performanceMiddleware = (req, res, next) => {
 
     // Log slow requests (> 500ms)
     if (duration > 500) {
-      console.warn(`⚠️  SLOW REQUEST: ${req.method} ${path} - ${duration}ms`);
+      console.warn(`SLOW REQUEST: ${req.method} ${path} - ${duration}ms`);
     }
 
     // Call the original end function

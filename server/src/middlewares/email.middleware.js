@@ -1,11 +1,6 @@
 import ApiError from '../utils/apiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
-/*
-================================================================
-        To ensure only mnnit students are able to login   
-================================================================
-*/
 
 const emailMiddleware = asyncHandler(async (req, res, next) => {
     const { email } = req.body;
