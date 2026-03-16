@@ -49,7 +49,6 @@ function App() {
 
     if (hasLoadedBefore) {
       // This is a page reload, skip database check
-      console.log("🔄 Page reload detected, skipping database health check");
       setDbConnected(true);
       setIsInitialLoad(false);
       setShowLoading(false);
@@ -71,11 +70,8 @@ function App() {
           baseUrl.replace(/\/api$/, '') + '/users/health' // Fallback without /api
         ];
 
-        console.log("🔍 Initial load - Checking database health...");
-
         for (const url of possibleUrls) {
           try {
-            console.log(`Trying: ${url}`);
             const response = await axios.get(url, {
               timeout: 3000
             });
@@ -83,11 +79,9 @@ function App() {
             if (response.status === 200) {
               setDbConnected(true);
               setIsInitialLoad(false);
-              console.log("✅ Database connection established at:", url);
               return; // Success, exit the function
             }
           } catch (urlError) {
-            console.log(`❌ Failed at ${url}:`, urlError.message);
             continue; // Try next URL
           }
         }
@@ -96,14 +90,11 @@ function App() {
         throw new Error("All health check URLs failed");
 
       } catch (error) {
-        console.error("❌ Database connection failed:", error.message);
         retryCount++;
 
         if (retryCount < maxRetries) {
-          console.log(`🔄 Retrying database connection (${retryCount}/${maxRetries})...`);
           setTimeout(checkDatabaseConnection, 2000);
         } else {
-          console.log("⚠️ Max retries reached. Proceeding without database health check.");
           setDbConnected(true); // Proceed anyway after max retries
           setIsInitialLoad(false);
         }
@@ -115,7 +106,6 @@ function App() {
 
     // Set a maximum loading time of 10 seconds as fallback
     const loadingTimeout = setTimeout(() => {
-      console.log("⏰ Loading timeout reached. Proceeding with app load.");
       setDbConnected(true);
       setIsInitialLoad(false);
       setShowLoading(false);
