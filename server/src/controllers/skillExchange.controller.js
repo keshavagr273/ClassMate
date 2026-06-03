@@ -109,9 +109,25 @@ const getSkillMatches = async (req, res) => {
         { model: Skill, attributes: ['id', 'name'] }
       ]
     });
-    res.json({ success: true, matches });
+
+    // Find all skill requests sent by the current user
+    const sentRequests = await SkillRequest.findAll({
+      where: { requesterId: userId }
+    });
+
+    // Map matches to include the status of any existing request
+    const matchesWithRequests = matches.map(match => {
+      const hasRequest = sentRequests.find(reqItem => 
+        reqItem.recipientId === match.userId && reqItem.SkillId === match.SkillId
+      );
+      
+      const matchJson = match.toJSON();
+      matchJson.requestStatus = hasRequest ? hasRequest.status : null;
+      return matchJson;
+    });
+
+    res.json({ success: true, matches: matchesWithRequests });
   } catch (error) {
-    console.error("Error in getSkillMatches:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

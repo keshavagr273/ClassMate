@@ -17,6 +17,7 @@ const SkillExchangeDashboard = () => {
   const [learnSkills, setLearnSkills] = useState([]);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Compute unique skills offered to teach (for learn mode)
   const teachableSkills = Array.from(new Set(skills
@@ -105,7 +106,6 @@ const SkillExchangeDashboard = () => {
         setTimeout(() => setErrorMessage(''), 5000); // Clear error after 5 seconds
       }
     } catch (error) {
-      console.error('Error adding skill:', error);
       setErrorMessage('Failed to add skill');
       setTimeout(() => setErrorMessage(''), 5000); // Clear error after 5 seconds
     } finally {
@@ -118,15 +118,15 @@ const SkillExchangeDashboard = () => {
       const result = await dispatch(sendSkillRequest({ recipientId, skillId, message }));
       if (sendSkillRequest.fulfilled.match(result)) {
         setMessage('');
-        setErrorMessage('Request sent successfully!');
-        setTimeout(() => setErrorMessage(''), 3000);
+        setSuccessMessage('Request sent successfully!');
+        dispatch(fetchMatches());
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else if (sendSkillRequest.rejected.match(result)) {
         const errorMsg = result.payload || 'Failed to send request';
         setErrorMessage(errorMsg);
         setTimeout(() => setErrorMessage(''), 5000);
       }
     } catch (error) {
-      console.error('Error sending request:', error);
       setErrorMessage('Failed to send request');
       setTimeout(() => setErrorMessage(''), 5000);
     }
@@ -158,8 +158,8 @@ const SkillExchangeDashboard = () => {
       dispatch(fetchMatches());
       dispatch(fetchUserSkills());
       
-      setErrorMessage('Skill deleted successfully!');
-      setTimeout(() => setErrorMessage(''), 3000);
+      setSuccessMessage('Skill deleted successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       setErrorMessage('Failed to delete skill: ' + (error.response?.data?.message || error.message));
       setTimeout(() => setErrorMessage(''), 5000);
@@ -280,6 +280,26 @@ const SkillExchangeDashboard = () => {
               </div>
             )}
 
+            {successMessage && (
+              <div className="px-4 py-2">
+                <div className="bg-green-900/20 border border-green-500/50 text-green-300 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="flex-1">{successMessage}</span>
+                  <button
+                    onClick={() => setSuccessMessage('')}
+                    className="text-green-400 hover:text-green-300 transition-colors"
+                    title="Dismiss success"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
             
             {/* Show skills based on current mode */}
             {mode === 'teach' && teachSkills.length > 0 && (
@@ -350,10 +370,16 @@ const SkillExchangeDashboard = () => {
                           <div className="text-[#9eaebd] text-sm">Skill: {match.Skill?.name || 'Unknown'}</div>
                         </div>
                         <button
-                          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 flex-row-reverse bg-[#2b3640] text-white text-sm font-medium leading-normal w-fit ml-auto"
+                          className={`flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 flex-row-reverse text-white text-sm font-medium leading-normal w-fit ml-auto transition-all ${
+                            match.requestStatus 
+                              ? 'bg-green-700 hover:bg-green-600 font-semibold' 
+                              : 'bg-[#2b3640] hover:bg-[#384654]'
+                          }`}
                           onClick={() => handleSendRequest(match.user.id, match.Skill.id)}
                         >
-                          <span className="truncate">Request to Connect</span>
+                          <span className="truncate">
+                            {match.requestStatus ? 'Send Request Again' : 'Request to Connect'}
+                          </span>
                         </button>
                       </div>
                     ))

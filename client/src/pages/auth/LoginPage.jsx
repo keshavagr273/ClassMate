@@ -41,7 +41,6 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (authError && !loading) {
-      console.log("Auth error received:", authError);
       if (toastIdRef.current) toast.dismiss(toastIdRef.current);
       toastIdRef.current = toast.error(authError, {
         position: "top-right",
@@ -80,10 +79,9 @@ const LoginPage = () => {
       } else if (type === "signup") {
         await dispatch(handleSignUp({ email, password })).unwrap();
         toast.success("Account created! You can now log in.");
-        setTab("login");
+        e.target.reset();
       }
     } catch (err) {
-      console.error("Form submission error:", err);
       // The error is already handled by the Redux slice and displayed via toast
       // This catch block prevents the app from crashing
     }
