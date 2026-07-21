@@ -4,11 +4,10 @@ import jwt from "jsonwebtoken";
 import ApiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import dotenv from "dotenv";
 import Subject from "../models/subject.model.js";
 import UserSubject from "../models/user_subject.model.js";
 import sequelize from "../db/db.js";
-dotenv.config();
+
 
 const getCurrentUTCDateTime = () => {
   const now = new Date();
@@ -16,7 +15,14 @@ const getCurrentUTCDateTime = () => {
 };
 
 const extractRegistrationDetails = (email) => {
-  const registrationNumber = email.match(/\d{8}/)[0];
+  const match = email.match(/\d{8}/);
+  if (!match) {
+    throw new ApiError(
+      "Invalid email format. Expected NAME.ROLLNO@iiitsonepat.ac.in with an 8-digit roll number.",
+      400
+    );
+  }
+  const registrationNumber = match[0];
   const graduationYear = parseInt(registrationNumber.substring(0, 4)) + 4;
   return { registrationNumber, graduationYear };
 };
@@ -90,7 +96,7 @@ export const loginUser = asyncHandler(async (req, res, next) => {
   if (!isMatch) return next(new ApiError("Email or password is wrong, re-enter.", 400));
 
   const token = jwt.sign(
-    { id: user.id, email: user.email },
+    { id: user.id, email: user.email, isAdmin: user.isAdmin },
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
@@ -100,11 +106,9 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "lax",
-    maxAge: 60 * 60 * 1000,
+    maxAge: 60 * 60 * 1000, // 1 hour
+    // NOTE: Do NOT set domain — the browser derives it from the response host.
   };
-  if (isProduction) {
-    cookieOptions.domain = "classmate-o06h.onrender.com";
-  }
   res.cookie("token", token, cookieOptions);
 
   res

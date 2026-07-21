@@ -6,8 +6,8 @@ export const authMiddleware = asyncHandler(async (req, res, next) => {
   const token = req.cookies.token;
 
   if (!token) {
-    // For /current endpoint, return a specific response
-    if (req.path === "/api/users/current") {
+    // For /current endpoint, return a graceful empty-user response instead of 401
+    if (req.path === "/current") {
       return res.status(200).json({
         status: "success",
         code: 200,
@@ -24,7 +24,7 @@ export const authMiddleware = asyncHandler(async (req, res, next) => {
     next();
   } catch (error) {
     // For /current endpoint, handle expired/invalid tokens gracefully
-    if (req.path === "/api/users/current") {
+    if (req.path === "/current") {
       res.clearCookie("token");
       return res.status(200).json({
         status: "success",

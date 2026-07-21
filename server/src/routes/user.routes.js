@@ -1,6 +1,7 @@
 import express from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import emailMiddleware from "../middlewares/email.middleware.js";
+import requireAdmin from "../middlewares/requireAdmin.middleware.js";
 import User from "../models/user.model.js"
 import {
   getCurrentUser,
@@ -26,7 +27,7 @@ router.get("/user/:id", getUserById);
 router.get("/current", authMiddleware, getCurrentUser);
 router.put("/update", authMiddleware, updateUser);
 router.post("/logout", authMiddleware, logoutUser);
-router.get('/admin/all',authMiddleware, getAllUsers);
+router.get('/admin/all', authMiddleware, requireAdmin, getAllUsers);
 
 
 export default router;

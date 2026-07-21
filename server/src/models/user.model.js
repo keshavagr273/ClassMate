@@ -65,6 +65,11 @@ const users = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    isAdmin: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     timestamps: true,

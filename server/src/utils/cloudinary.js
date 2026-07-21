@@ -16,80 +16,52 @@ cloudinary.config({
 const LARGE_FILE_THRESHOLD_BYTES = 95 * 1024 * 1024;
 const DEFAULT_CHUNK_SIZE_BYTES = 20 * 1024 * 1024;
 
-export const uploadImageToCloudinary = (localFilePath, options = {}) => {
-  return new Promise(async (resolve, reject) => {
-    if (!localFilePath) {
-      console.log("No file path provided");
-      resolve(null);
-      return;
-    }
+export const uploadImageToCloudinary = async (localFilePath, options = {}) => {
+  if (!localFilePath) {
+    console.log("No file path provided");
+    return null;
+  }
 
-    const cleanupLocalFile = (path) => {
-      fs.unlink(path, (err) => {
-        if (err) {
-          console.error(`Error deleting local file ${path}:`, err);
-        } else {
-          console.log(`Local file deleted successfully: ${path}`);
-        }
-      });
-    };
-
+  const cleanupLocalFile = async (filePath) => {
     try {
-      const stats = await fsPromises.stat(localFilePath);
-      const fileSize = stats.size;
-      console.log(`File size for ${localFilePath}: ${fileSize} bytes`);
-
-      let result;
-
-      if (fileSize < LARGE_FILE_THRESHOLD_BYTES) {
-        console.log(`Using standard upload for ${localFilePath}`);
-        result = await cloudinary.uploader.upload(localFilePath, {
-          resource_type: "auto",
-          ...options,
-        });
-        console.log("Cloudinary standard upload successful:", result.secure_url);
-      } else {
-        console.log(`Using large file upload (chunked) for ${localFilePath}`);
-        result = await new Promise((resolveUploadLarge, rejectUploadLarge) => {
-          const uploadOptions = {
-            resource_type: "auto",
-            chunk_size: options.chunk_size || DEFAULT_CHUNK_SIZE_BYTES,
-            ...options,
-          };
-          delete uploadOptions.chunk_size_passed_in_options;
-
-          cloudinary.uploader.upload_large(
-            localFilePath,
-            uploadOptions,
-            (error, uploadResult) => {
-              if (error) {
-                console.error(
-                  `Large file upload failed for ${localFilePath}:`,
-                  error
-                );
-                rejectUploadLarge(error);
-              } else {
-                console.log(
-                  `Large file upload successful for ${localFilePath}:`,
-                  uploadResult.secure_url
-                );
-                resolveUploadLarge(uploadResult);
-              }
-            }
-          );
-        });
-      }
-
-      cleanupLocalFile(localFilePath);
-      resolve(result.secure_url);
-    } catch (error) {
-      console.error(`Upload process failed for ${localFilePath}:`, error);
-      if (fs.existsSync(localFilePath)) {
-        cleanupLocalFile(localFilePath);
-      }
-      reject(error);
+      await fsPromises.unlink(filePath);
+      console.log(`Local file deleted successfully: ${filePath}`);
+    } catch (err) {
+      console.error(`Error deleting local file ${filePath}:`, err);
     }
-  });
+  };
+
+  try {
+    const stats = await fsPromises.stat(localFilePath);
+    const fileSize = stats.size;
+    console.log(`File size for ${localFilePath}: ${fileSize} bytes`);
+
+    let result;
+
+    if (fileSize < LARGE_FILE_THRESHOLD_BYTES) {
+      console.log(`Using standard upload for ${localFilePath}`);
+      result = await cloudinary.uploader.upload(localFilePath, {
+        resource_type: "auto",
+        ...options,
+      });
+      console.log("Cloudinary standard upload successful:", result.secure_url);
+    } else {
+      console.log(`Using large file upload (chunked) for ${localFilePath}`);
+      result = await cloudinary.uploader.upload_large(localFilePath, {
+        resource_type: "auto",
+        chunk_size: options.chunk_size || DEFAULT_CHUNK_SIZE_BYTES,
+        ...options,
+      });
+      console.log(`Large file upload successful for ${localFilePath}:`, result.secure_url);
+    }
+
+    await cleanupLocalFile(localFilePath);
+    return result.secure_url;
+  } catch (error) {
+    console.error(`Upload process failed for ${localFilePath}:`, error);
+    await cleanupLocalFile(localFilePath).catch(() => {});
+    throw error;
+  }
 };
 
 export const deleteImageFromCloudinary = asyncHandler(async (imageUrl) => {

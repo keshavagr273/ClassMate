@@ -9,6 +9,10 @@ import {
   extractCloudinaryPublicId,
 } from "../utils/cloudinary.js";
 
+// Shared constant for valid item conditions
+const ITEM_CONDITIONS = ["New", "Like New", "Good", "Fair", "Poor"];
+
+
 export const createBuyAndSellItem = asyncHandler(async (req, res) => {
   const {
     item_name,
@@ -20,21 +24,25 @@ export const createBuyAndSellItem = asyncHandler(async (req, res) => {
     category,
   } = req.body;
 
-  // Validate inputs
-  if (price < 0) throw new ApiError("Price must be positive", 405);
-
+  // Validate item_name first
   if (!item_name?.trim()) {
     throw new ApiError("Item name is required", 400);
   }
 
+  // Validate price
+  if (price !== undefined && price !== null) {
+    const numericPrice = Number(price);
+    if (isNaN(numericPrice) || numericPrice < 0) {
+      throw new ApiError("Price must be a non-negative number", 400);
+    }
+  }
+
   if (
     !item_condition ||
-    !["Good", "Fair", "Poor", "New", "Like New", "Fair"].includes(
-      item_condition
-    )
+    !ITEM_CONDITIONS.includes(item_condition)
   ) {
     throw new ApiError(
-      "Valid item condition is required (Good, Fair, or Poor)",
+      `Valid item condition is required: ${ITEM_CONDITIONS.join(", ")}`,
       400
     );
   }
@@ -104,16 +112,23 @@ export const updateBuyAndSellItem = asyncHandler(async (req, res) => {
   const item = await BuyAndSell.findByPk(id);
   if (!item) throw new ApiError("Item not found", 404);
 
+  // Ownership check — only the creator can update their item
+  if (item.userId !== req.user?.id) {
+    throw new ApiError("You are not authorized to update this item", 403);
+  }
 
-  if (item_condition && !["Good", "Fair", "Poor"].includes(item_condition)) {
+  if (item_condition && !ITEM_CONDITIONS.includes(item_condition)) {
     throw new ApiError(
-      "Valid item condition is required (Good, Fair, or Poor)",
+      `Valid item condition is required: ${ITEM_CONDITIONS.join(", ")}`,
       400
     );
   }
 
-  if (price !== undefined && price < 0) {
-    throw new ApiError("Price must be positive", 405);
+  if (price !== undefined && price !== null) {
+    const numericPrice = Number(price);
+    if (isNaN(numericPrice) || numericPrice < 0) {
+      throw new ApiError("Price must be a non-negative number", 400);
+    }
   }
 
   let image_url = item.image_url;
@@ -193,13 +208,25 @@ export const getBuyAndSellItem = asyncHandler(async (req, res) => {
 });
 
 export const getAllBuyAndSellItems = asyncHandler(async (req, res) => {
-  const items = await BuyAndSell.findAll({
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await BuyAndSell.findAndCountAll({
     order: [["createdAt", "DESC"]],
+    limit,
+    offset,
   });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, items, "All items retrieved successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        { items: rows, total: count, page, limit },
+        "Items retrieved successfully"
+      )
+    );
 });
 
 export const getUserItems = asyncHandler(async (req, res) => {

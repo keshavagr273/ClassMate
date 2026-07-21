@@ -18,6 +18,9 @@ import skillExchangeRoutes from './src/routes/skillExchange.routes.js';
 import internshipRoutes from './src/routes/internship.routes.js';
 import performanceMiddleware from './src/middlewares/performance.middleware.js';
 import metrics from './src/utils/metrics.js';
+import authMiddleware from './src/middlewares/auth.middleware.js';
+import requireAdmin from './src/middlewares/requireAdmin.middleware.js';
+
 
 dotenv.config({ path: "./.env" });
 const app = express();
@@ -61,14 +64,15 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Performance metrics endpoint
-app.get("/api/metrics", (req, res) => {
+// Performance metrics endpoint — protected: admin only
+app.get("/api/metrics", authMiddleware, requireAdmin, (req, res) => {
   res.json({
     success: true,
     data: metrics.getStats(),
     message: "Performance metrics retrieved successfully"
   });
 });
+
 
 // Use routes
 app.use("/api/users", userRoutes);
@@ -114,8 +118,14 @@ const startServer = async () => {
     console.log("Associations initialized!");
     
     console.log("Connecting to database...");
-    await sequelize.sync({ alter: true });
-    console.log("Database & tables have been updated!");
+    // Only run alter:true in development — in production, use proper migrations
+    if (process.env.NODE_ENV !== "production") {
+      await sequelize.sync({ alter: true });
+      console.log("Database & tables have been updated (dev sync)!");
+    } else {
+      await sequelize.authenticate();
+      console.log("Database connection authenticated!");
+    }
     await connectDb();
     console.log("Database connected successfully");
 
@@ -131,15 +141,20 @@ const startServer = async () => {
   }
 };
 
+
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   process.exit(1);
 });
 
-process.on("unhandledRejection", (error) => {
-  console.error("Unhandled Rejection:", error);
-  // Don't exit the process, just log the error
-  // process.exit(1);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  // In production, exit so the process manager (PM2/Docker) can restart cleanly.
+  // In development, log only to avoid disrupting the dev loop.
+  if (process.env.NODE_ENV === "production") {
+    process.exit(1);
+  }
 });
+
 
 startServer();

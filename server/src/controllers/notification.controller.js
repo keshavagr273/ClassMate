@@ -25,13 +25,14 @@ export const getUserNotifications = asyncHandler(async (req, res) => {
       message: "User notifications retrieved successfully",
     });
   } catch (error) {
+    console.error("[Notification] Failed to retrieve notifications:", error);
     res.status(500).json({
       success: false,
       message: "Failed to retrieve notifications",
-      error: error.message,
     });
   }
 });
+
 
 export const getNotification = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -125,13 +126,14 @@ export const updateNotification = asyncHandler(async (req, res) => {
       message: "Notification updated successfully",
     });
   } catch (error) {
+    console.error("[Notification] Failed to update notification:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update notification",
-      error: error.message,
     });
   }
 });
+
 
 export const deleteNotification = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -153,13 +155,14 @@ export const deleteNotification = asyncHandler(async (req, res) => {
       message: "Notification deleted successfully",
     });
   } catch (error) {
+    console.error("[Notification] Failed to delete notification:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to delete notification",
-      error: error.message,
     });
   }
 });
+
 
 export const markNotificationAsRead = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -184,13 +187,14 @@ export const markNotificationAsRead = asyncHandler(async (req, res) => {
       message: "Notification marked as read",
     });
   } catch (error) {
+    console.error("[Notification] Failed to mark as read:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to mark notification as read",
-      error: error.message,
     });
   }
 });
+
 
 export const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
   if (!req.user || !req.user.id) {
@@ -245,7 +249,10 @@ export const getUnreadNotificationCount = asyncHandler(async (req, res) => {
 });
 
 export const broadcastNotification = asyncHandler(async (req, res) => {
-  console.log("Broadcast Notification - req.body:", req.body);
+  // Restrict to admin users only
+  if (!req.user?.isAdmin) {
+    throw new ApiError("Admin access required", 403);
+  }
 
   const { message, type, entityType, entityId, actionUrl, metadata } = req.body;
   if (!message || message.trim() === "") {
@@ -266,26 +273,27 @@ export const broadcastNotification = asyncHandler(async (req, res) => {
   }
 
   const users = await User.findAll({ attributes: ["id"] });
-  const userIds = users.map((user) => user.id);
+  const notificationsData = users.map((user) => ({
+    userId: user.id,
+    message,
+    type: type || "general",
+    entityType,
+    entityId,
+    actionUrl,
+    metadata,
+    file_url,
+    is_read: false,
+  }));
 
-  const notifications = await Promise.all(
-    userIds.map((userId) =>
-      Notification.create({
-        userId,
-        message,
-        type: type || "general",
-        entityType,
-        entityId,
-        actionUrl,
-        metadata,
-        file_url,
-      })
-    )
-  );
+  // Use bulkCreate in chunks to avoid overwhelming the DB connection pool
+  const CHUNK_SIZE = 500;
+  for (let i = 0; i < notificationsData.length; i += CHUNK_SIZE) {
+    await Notification.bulkCreate(notificationsData.slice(i, i + CHUNK_SIZE));
+  }
 
   res.status(201).json({
     success: true,
-    data: notifications,
-    message: "Broadcast notification sent successfully to all users",
+    message: `Broadcast notification sent successfully to ${users.length} users`,
   });
 });
+

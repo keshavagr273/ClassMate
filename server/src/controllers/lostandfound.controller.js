@@ -52,7 +52,10 @@ export const updateLostItem = asyncHandler(async (req, res) => {
     throw new ApiError("Item not found", 404);
   }
 
- 
+  // Ownership check — only the creator can update their item
+  if (item.userId !== req.user.id) {
+    throw new ApiError("You are not authorized to update this item", 403);
+  }
 
   let image_url = item.image_url;
   if (req.file) {
@@ -65,7 +68,6 @@ export const updateLostItem = asyncHandler(async (req, res) => {
           console.log(`Deleted old image with public_id: ${publicId} from Cloudinary`);
         } catch (error) {
           console.error("Error deleting old image from Cloudinary:", error);
-          // Optionally, you can decide to throw an error here.
         }
       }
     }

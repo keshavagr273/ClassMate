@@ -31,12 +31,14 @@ const isValidDate = (dateString) => {
 };
 
 export const markAttendance = async (req, res) => {
-  const { userId, subjectId, date, status } = req.body;
+  // userId is always taken from the authenticated token — never from the request body.
+  const numUserId = req.user?.id;
+  const { subjectId, date, status } = req.body;
 
-  if (userId == null || subjectId == null || !date || !status) {
+  if (numUserId == null || subjectId == null || !date || !status) {
     return res.status(400).json({
       success: false,
-      message: "userId, subjectId, date, and status are required.",
+      message: "subjectId, date, and status are required.",
     });
   }
   if (!["Present", "Absent"].includes(status)) {
@@ -51,12 +53,11 @@ export const markAttendance = async (req, res) => {
       message: "Invalid date format. Use YYYY-MM-DD.",
     });
   }
-  const numUserId = parseInt(userId, 10);
   const numSubjectId = parseInt(subjectId, 10);
-  if (isNaN(numUserId) || isNaN(numSubjectId)) {
+  if (isNaN(numSubjectId)) {
     return res
       .status(400)
-      .json({ success: false, message: "Invalid userId or subjectId." });
+      .json({ success: false, message: "Invalid subjectId." });
   }
 
   try {
@@ -104,7 +105,7 @@ export const markAttendance = async (req, res) => {
     if (error.name === "SequelizeForeignKeyConstraintError") {
       return res.status(400).json({
         success: false,
-        message: "Invalid User or Subject ID provided.",
+        message: "Invalid Subject ID provided.",
       });
     }
     handleError(res, error, "Failed to mark attendance.");

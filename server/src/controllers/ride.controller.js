@@ -5,6 +5,8 @@ import ApiResponse from "../utils/apiResponse.js";
 import ApiError from "../utils/apiError.js";
 import { Op } from "sequelize";
 import RideParticipant from "../models/rideParticipant.model.js";
+import sequelize from "../db/db.js";
+
 
 export const createRide = asyncHandler(async (req, res) => {
   const {
@@ -283,60 +285,50 @@ export const joinRide = asyncHandler(async (req, res) => {
     throw new ApiError("Authentication required", 401);
   }
 
-  // Find the ride
-  const ride = await Rides.findByPk(id);
-  if (!ride) {
-    throw new ApiError("Ride not found", 404);
-  }
+  const result = await sequelize.transaction(async (t) => {
+    // Lock the ride row for the duration of this transaction to prevent race conditions
+    const ride = await Rides.findByPk(id, { lock: t.LOCK.UPDATE, transaction: t });
+    if (!ride) throw new ApiError("Ride not found", 404);
 
-  // Check if ride is active
-  if (ride.status !== "OPEN") {
-    throw new ApiError("This ride is not available for joining", 400);
-  }
+    if (ride.status !== "OPEN") {
+      throw new ApiError("This ride is not available for joining", 400);
+    }
 
-  // Check if user already joined the ride
-  const existingEntry = await RideParticipant.findOne({
-    where: { rideId: id, userId },
+    // Check if user is the creator
+    if (ride.creatorId === userId) {
+      throw new ApiError("You cannot join your own ride", 400);
+    }
+
+    // Check if user already joined
+    const existingEntry = await RideParticipant.findOne({
+      where: { rideId: id, userId },
+      transaction: t,
+    });
+    if (existingEntry) throw new ApiError("You have already joined this ride", 400);
+
+    // Check available seats (authoritative — from locked row)
+    if (ride.availableSeats <= 0) {
+      throw new ApiError("Ride is already full", 400);
+    }
+
+    await RideParticipant.create({ rideId: id, userId }, { transaction: t });
+    ride.availableSeats -= 1;
+    if (ride.availableSeats === 0) ride.status = "FULL";
+    await ride.save({ transaction: t });
+    return ride;
   });
-  if (existingEntry) {
-    throw new ApiError("You have already joined this ride", 400);
-  }
 
-  // Count the number of participants currently in the ride
-  const joinCount = await RideParticipant.count({ where: { rideId: id } });
-  if (joinCount >= ride.totalSeats) {
-    throw new ApiError("Ride is already full", 400);
-  }
-
-  // Create new join record
-  await RideParticipant.create({ rideId: id, userId });
-
-  // Decrement availableSeats by 1
-  ride.availableSeats = ride.availableSeats - 1;
-
-  // Update ride status if full
-  if (ride.availableSeats === 0) {
-    ride.status = "FULL";
-  }
-
-  await ride.save();
-
-  // Fetch all participants with user details
+  // Fetch updated participants list outside the transaction
   const participants = await RideParticipant.findAll({
     where: { rideId: id },
-    include: [
-      {
-        model: User,
-        as: "participant",
-        attributes: ["id", "name", "email"],
-      },
-    ],
+    include: [{ model: User, as: "participant", attributes: ["id", "name", "email"] }],
   });
 
   return res
     .status(200)
     .json(new ApiResponse(200, participants, "Joined ride successfully"));
 });
+
 
 export const unjoinRide = asyncHandler(async (req, res) => {
   const { id } = req.params; // ride ID from URL params
@@ -346,46 +338,32 @@ export const unjoinRide = asyncHandler(async (req, res) => {
     throw new ApiError("Authentication required", 401);
   }
 
-  // Find the ride
-  const ride = await Rides.findByPk(id);
-  if (!ride) {
-    throw new ApiError("Ride not found", 404);
-  }
+  const result = await sequelize.transaction(async (t) => {
+    // Lock the ride row to prevent concurrent modification
+    const ride = await Rides.findByPk(id, { lock: t.LOCK.UPDATE, transaction: t });
+    if (!ride) throw new ApiError("Ride not found", 404);
 
-  // Check if user has already joined the ride
-  const existingEntry = await RideParticipant.findOne({
-    where: { rideId: id, userId },
+    const existingEntry = await RideParticipant.findOne({
+      where: { rideId: id, userId },
+      transaction: t,
+    });
+    if (!existingEntry) throw new ApiError("You have not joined this ride", 400);
+
+    await existingEntry.destroy({ transaction: t });
+    ride.availableSeats += 1;
+    if (ride.status === "FULL") ride.status = "OPEN";
+    await ride.save({ transaction: t });
+    return ride;
   });
-  if (!existingEntry) {
-    throw new ApiError("You have not joined this ride", 400);
-  }
 
-  // Remove the join record
-  await existingEntry.destroy();
-
-  // Increment availableSeats by 1
-  ride.availableSeats = ride.availableSeats + 1;
-
-  // Update ride status if it was full
-  if (ride.status === "FULL") {
-    ride.status = "OPEN";
-  }
-
-  await ride.save();
-
-  // Fetch updated participants list
+  // Fetch updated participants list outside the transaction
   const participants = await RideParticipant.findAll({
     where: { rideId: id },
-    include: [
-      {
-        model: User,
-        as: "participant",
-        attributes: ["id", "name", "email"],
-      },
-    ],
+    include: [{ model: User, as: "participant", attributes: ["id", "name", "email"] }],
   });
 
   return res
     .status(200)
     .json(new ApiResponse(200, participants, "Cancelled join successfully"));
 });
+

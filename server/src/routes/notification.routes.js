@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import {
   getUserNotifications,
   getNotification,
@@ -12,10 +11,10 @@ import {
   broadcastNotification,
 } from "../controllers/notification.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
-
-const upload = multer({ dest: "uploads/" });
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
+
 
 router.use(authMiddleware);
 

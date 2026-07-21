@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import {
   createLostItem,
   updateLostItem,
@@ -7,11 +6,12 @@ import {
   getLostItem,
   getAllLostItems,
 } from "../controllers/lostandfound.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js"
-const router = express.Router();
+import authMiddleware from "../middlewares/auth.middleware.js";
 import filterInputMiddleware from "../middlewares/filter.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
-const upload = multer({ dest: "./public/temp" });
+const router = express.Router();
+
 
 
 router.post("/lost-items", upload.single("image"), authMiddleware, filterInputMiddleware, createLostItem);
