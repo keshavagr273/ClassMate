@@ -225,6 +225,7 @@ const ProfilePage = () => {
                       name="name"
                       value={userData.name}
                       onChange={handleChange}
+                      placeholder="Name"
                     />
                   ) : (
                     <p className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] text-center">{userData.name}</p>

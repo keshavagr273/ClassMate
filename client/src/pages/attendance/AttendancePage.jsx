@@ -184,8 +184,12 @@ const AttendancePage = () => {
   const openAttendanceModal = useCallback(
     (mode, record = null, specificDate = null) => {
       const subject = selectedSubjectForDetails;
-      if (!subject || !userId) {
-        toast.error("Cannot open modal - user or subject missing.");
+      if (!subject) {
+        toast.error("Please select a subject from the above list.");
+        return;
+      }
+      if (!userId) {
+        toast.error("Cannot open modal - user missing.");
         return;
       }
 

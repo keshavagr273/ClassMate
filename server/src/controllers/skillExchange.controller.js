@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import Skill from '../models/skill.model.js';
 import UserSkill from '../models/userSkill.model.js';
 import SkillRequest from '../models/skillRequest.model.js';
@@ -103,7 +104,11 @@ const getSkillMatches = async (req, res) => {
     
     // Find users who can teach those skills
     const matches = await UserSkill.findAll({
-      where: { SkillId: skillIds, type: 'teach' },
+      where: { 
+        SkillId: skillIds, 
+        type: 'teach',
+        userId: { [Op.ne]: userId }
+      },
       include: [
         { model: User, attributes: ['id', 'name', 'email', 'branch', 'semester'] },
         { model: Skill, attributes: ['id', 'name'] }
