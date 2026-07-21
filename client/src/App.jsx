@@ -33,7 +33,7 @@ import AdminPanel from "./pages/admin/AdminPanel";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import LoginPage from "./pages/auth/LoginPage";
 import SkillExchangeDashboard from './pages/skill-exchange/SkillExchangeDashboard';
-import { InternConnect } from './pages';
+import { JobConnect } from './pages';
 
 function App() {
   const { loading: authLoading, lastChecked } = useSelector(
@@ -160,7 +160,7 @@ function App() {
             </Route>
 
             {/* --- New Route --- */}
-            <Route path="/intern-connect" element={<InternConnect />} />
+            <Route path="/job-connect" element={<JobConnect />} />
 
             {/* --- Catch-All Route --- */}
             <Route path="*" element={<NotFound />} />

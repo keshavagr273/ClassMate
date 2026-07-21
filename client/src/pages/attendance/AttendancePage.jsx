@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { startOfDay } from "date-fns";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { FiAlertTriangle, FiBookOpen, FiEdit2 } from "react-icons/fi";
 import { MdMenuBook, MdAnalytics, MdEvent, MdEdit } from "react-icons/md";
 import DatePicker from "react-datepicker";

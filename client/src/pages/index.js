@@ -1,1 +1,1 @@
-export { default as InternConnect } from './InternConnect'; 
+export { default as JobConnect } from './JobConnect'; 

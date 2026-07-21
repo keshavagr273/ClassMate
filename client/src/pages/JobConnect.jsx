@@ -16,9 +16,10 @@ const defaultFilters = {
   location: '',
   work_from_home: false,
   stipend: '',
+  radius: '',
 };
 
-export default function InternConnect() {
+export default function JobConnect() {
   const [filters, setFilters] = useState(defaultFilters);
   const [internships, setInternships] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,10 +74,10 @@ export default function InternConnect() {
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#111827] text-white py-10 px-4 flex flex-col items-center">
       <div className="w-full max-w-4xl bg-[#1e293b] border border-blue-700 rounded-3xl shadow-xl p-8 mb-10">
         <h1 className="text-4xl font-extrabold text-blue-400 flex items-center gap-3 mb-2">
-          <Briefcase className="w-10 h-10 text-blue-500" /> InternConnect
+          <Briefcase className="w-10 h-10 text-blue-500" /> JobConnect
         </h1>
         <p className="text-lg text-gray-300 mb-6">
-          Explore curated internships from trusted sources. Filter by field, city, stipend, and remote jobs.
+          Explore curated jobs from trusted sources. Filter by field, city, salary, and remote jobs.
         </p>
         <form
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -108,7 +109,7 @@ export default function InternConnect() {
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1 text-gray-300">
-              Minimum Stipend (₹)
+              Minimum Salary (₹)
             </label>
             <input
               name="stipend"
@@ -118,18 +119,40 @@ export default function InternConnect() {
               placeholder="e.g. 5000"
             />
           </div>
-          <div className="flex items-center gap-2 pt-6">
-            <input
-              type="checkbox"
-              name="work_from_home"
-              checked={filters.work_from_home}
-              onChange={handleChange}
-              id="wfh"
-              className="accent-blue-500 w-5 h-5"
-            />
-            <label htmlFor="wfh" className="text-sm font-semibold text-gray-300">
-              Remote Only
+          <div>
+            <label className="block text-sm font-semibold mb-1 text-gray-300">
+              Search Radius (km)
             </label>
+            <select
+              name="radius"
+              value={filters.radius}
+              onChange={handleChange}
+              className="w-full bg-[#0f172a] text-white border border-blue-700 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Any distance</option>
+              <option value="0">Exact location</option>
+              <option value="4">Within 4 km</option>
+              <option value="8">Within 8 km</option>
+              <option value="16">Within 16 km</option>
+              <option value="26">Within 26 km</option>
+              <option value="40">Within 40 km</option>
+              <option value="80">Within 80 km</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-3 pt-6">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="work_from_home"
+                checked={filters.work_from_home}
+                onChange={handleChange}
+                id="wfh"
+                className="accent-blue-500 w-5 h-5"
+              />
+              <label htmlFor="wfh" className="text-sm font-semibold text-gray-300">
+                Remote Only
+              </label>
+            </div>
           </div>
           <button
             type="submit"
@@ -139,12 +162,12 @@ export default function InternConnect() {
             {loading ? (
               <>
                 <Loader2 className="animate-spin w-5 h-5" />
-                <span>Scraping internships...</span>
+                <span>Searching jobs...</span>
               </>
             ) : (
               <>
                 <Filter className="w-5 h-5" />
-                <span>Find Internships</span>
+                <span>Find Jobs</span>
               </>
             )}
           </button>
@@ -156,8 +179,8 @@ export default function InternConnect() {
             <div className="flex items-center gap-3 text-blue-300">
               <Loader2 className="animate-spin w-5 h-5" />
               <div>
-                <p className="font-semibold">Scraping internships from Internshala...</p>
-                <p className="text-sm text-blue-400">This may take 30-60 seconds. Please wait...</p>
+                <p className="font-semibold">Searching jobs from Jooble...</p>
+                <p className="text-sm text-blue-400">This may take a few seconds. Please wait...</p>
               </div>
             </div>
           </div>
@@ -167,7 +190,7 @@ export default function InternConnect() {
       {internships.length > 0 && (
         <div className="w-full max-w-5xl bg-[#1f2937] rounded-3xl shadow-lg p-6 border border-blue-700">
           <h2 className="text-2xl font-bold text-blue-400 mb-6">
-            Internship Results
+            Job Results
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {internships.map((item, idx) => (
