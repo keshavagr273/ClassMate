@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Save } from "lucide-react";
+import { toLocalDateTimeInput } from "../../utils/dateUtils";
 
-const RideForm = ({ initialData, onSubmit, onCancel }) => {
+const RideForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
     pickupLocation: "",
     dropLocation: "",
@@ -11,8 +12,31 @@ const RideForm = ({ initialData, onSubmit, onCancel }) => {
     estimatedCost: "",
     description: "",
     phoneNumber: "",
-    ...initialData,
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        pickupLocation: initialData.pickupLocation || "",
+        dropLocation: initialData.dropLocation || "",
+        departureDateTime: toLocalDateTimeInput(initialData.departureDateTime),
+        totalSeats: initialData.totalSeats || 1,
+        estimatedCost: initialData.estimatedCost ?? "",
+        description: initialData.description || "",
+        phoneNumber: initialData.phoneNumber || "",
+      });
+    } else {
+      setFormData({
+        pickupLocation: "",
+        dropLocation: "",
+        departureDateTime: "",
+        totalSeats: 1,
+        estimatedCost: "",
+        description: "",
+        phoneNumber: "",
+      });
+    }
+  }, [initialData]);
 
   const [errors, setErrors] = useState({});
 
@@ -74,8 +98,13 @@ const RideForm = ({ initialData, onSubmit, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (validateForm()) {
-      onSubmit(formData);
+      const submissionData = {
+        ...formData,
+        departureDateTime: new Date(formData.departureDateTime).toISOString(),
+      };
+      onSubmit(submissionData);
     }
   };
 
@@ -219,15 +248,49 @@ const RideForm = ({ initialData, onSubmit, onCancel }) => {
       <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3 pt-2">
         <button
           type="submit"
-          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center sm:flex-1"
+          disabled={isSubmitting}
+          className={`${
+            isSubmitting
+              ? "bg-green-800 cursor-not-allowed opacity-75"
+              : "bg-green-600 hover:bg-green-700"
+          } text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center sm:flex-1`}
         >
-          <Save className="mr-2 h-4 w-4" />
-          Save
+          {isSubmitting ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                ></path>
+              </svg>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save
+            </>
+          )}
         </button>
         <button
           type="button"
+          disabled={isSubmitting}
           onClick={onCancel}
-          className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors sm:flex-1"
+          className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors sm:flex-1"
         >
           Cancel
         </button>

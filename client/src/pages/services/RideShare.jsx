@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Car, AlertTriangle, Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { formatDateTime, isRideActive } from "../../utils/dateUtils";
+import { formatDateTime, formatDate, formatTime, isRideActive } from "../../utils/dateUtils";
 import RideHeader from "../../components/rides/RideHeader";
 import RideFilters from "../../components/rides/RideFilters";
 import RideGrid from "../../components/rides/RideGrid";
@@ -38,6 +38,7 @@ const RideShare = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -58,6 +59,8 @@ const RideShare = () => {
   };
 
   const handleFormSubmit = async (formData) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       if (editingRide) {
         await dispatch(
@@ -65,14 +68,17 @@ const RideShare = () => {
             id: editingRide.id,
             formData: { ...formData, creatorId: user.id },
           })
-        );
+        ).unwrap();
         setEditingRide(null);
       } else {
-        await dispatch(createRide({ ...formData, creatorId: user.id }));
+        await dispatch(createRide({ ...formData, creatorId: user.id })).unwrap();
       }
       setIsFormOpen(false);
     } catch (err) {
       console.error("Error submitting ride:", err);
+      alert(err.message || "Failed to save ride.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -236,7 +242,7 @@ const RideShare = () => {
                     <div className="flex flex-[2_2_0px] flex-col gap-4">
                       <div className="flex flex-col gap-1">
                         <p className="text-white text-base font-bold leading-tight">{ride.pickupLocation} to {ride.dropLocation}</p>
-                        <p className="text-[#9eadbd] text-sm font-normal leading-normal">Date: {ride.departureDateTime ? new Date(ride.departureDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'} Time: {ride.departureDateTime ? new Date(ride.departureDateTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : 'Unknown'} Seats Available: {ride.availableSeats}</p>
+                        <p className="text-[#9eadbd] text-sm font-normal leading-normal">Date: {formatDate(ride.departureDateTime)} Time: {formatTime(ride.departureDateTime)} Seats Available: {ride.availableSeats}</p>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -281,6 +287,7 @@ const RideShare = () => {
               }}
               onSubmit={handleFormSubmit}
               editingRide={editingRide}
+              isSubmitting={isSubmitting}
             />
             {/* Delete Confirmation Modal */}
             <AnimatePresence>
@@ -332,8 +339,8 @@ const RideShare = () => {
                     <button type="button" className="absolute top-4 right-4 text-white hover:text-[#9eadbd]" onClick={() => setDetailsModalOpen(false)}>&times;</button>
                     <h2 className="text-xl md:text-2xl font-bold mb-2 text-white text-center">{selectedRide.pickupLocation} to {selectedRide.dropLocation}</h2>
                     <div className="flex flex-col gap-2 text-white">
-                      <span>Date: {selectedRide.departureDateTime ? new Date(selectedRide.departureDateTime).toLocaleDateString() : 'Unknown'}</span>
-                      <span>Time: {selectedRide.departureDateTime ? new Date(selectedRide.departureDateTime).toLocaleTimeString() : 'Unknown'}</span>
+                      <span>Date: {formatDate(selectedRide.departureDateTime)}</span>
+                      <span>Time: {formatTime(selectedRide.departureDateTime)}</span>
                       <span>Seats Available: {selectedRide.availableSeats}</span>
                       {selectedRide.estimatedCost && <span>Estimated Cost: {selectedRide.estimatedCost}</span>}
                       {selectedRide.phoneNumber && <span>Contact: {selectedRide.phoneNumber}</span>}

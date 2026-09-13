@@ -135,8 +135,16 @@ const ridesSlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(createRide.fulfilled, (state, action) => {
-        state.rides.push(action.payload);
-        state.userRides.push(action.payload);
+        const rideExists = state.rides.some((r) => r.id === action.payload.id);
+        if (!rideExists) {
+          state.rides.push(action.payload);
+        }
+        const userRideExists = state.userRides.some(
+          (r) => r.id === action.payload.id
+        );
+        if (!userRideExists) {
+          state.userRides.push(action.payload);
+        }
         updateFilteredRides(state);
       })
       .addCase(updateRide.fulfilled, (state, action) => {

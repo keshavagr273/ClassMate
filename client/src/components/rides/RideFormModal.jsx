@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Plus, Edit } from "lucide-react";
 import RideForm from "./RideForm";
 
-const RideFormModal = ({ isOpen, editingRide, onSubmit, onCancel }) => {
+const RideFormModal = ({ isOpen, editingRide, onSubmit, onCancel, isSubmitting = false }) => {
   if (!isOpen) return null;
 
   return (
@@ -12,7 +12,7 @@ const RideFormModal = ({ isOpen, editingRide, onSubmit, onCancel }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
-      onClick={onCancel}
+      onClick={isSubmitting ? undefined : onCancel}
     >
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
@@ -38,6 +38,7 @@ const RideFormModal = ({ isOpen, editingRide, onSubmit, onCancel }) => {
           initialData={editingRide}
           onSubmit={onSubmit}
           onCancel={onCancel}
+          isSubmitting={isSubmitting}
         />
       </motion.div>
     </motion.div>

@@ -28,6 +28,11 @@ export const createRide = asyncHandler(async (req, res) => {
     throw new ApiError("Departure date and time is required", 400);
   }
 
+  const parsedDeparture = new Date(departureDateTime);
+  if (isNaN(parsedDeparture.getTime())) {
+    throw new ApiError("Invalid departure date and time format", 400);
+  }
+
   if (!totalSeats || totalSeats < 1) {
     throw new ApiError("Total seats must be at least 1", 400);
   }
@@ -41,12 +46,32 @@ export const createRide = asyncHandler(async (req, res) => {
     throw new ApiError("Authentication required", 401);
   }
 
+  // Deduplication check: Prevent duplicate ride creation within 2 minutes
+  const recentDuplicate = await Rides.findOne({
+    where: {
+      creatorId,
+      pickupLocation: pickupLocation.trim(),
+      dropLocation: dropLocation.trim(),
+      departureDateTime: parsedDeparture,
+      status: "OPEN",
+      createdAt: {
+        [Op.gte]: new Date(Date.now() - 2 * 60 * 1000),
+      },
+    },
+  });
+
+  if (recentDuplicate) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, recentDuplicate, "Ride already created"));
+  }
+
   try {
     const newRide = await Rides.create({
       creatorId,
-      pickupLocation,
-      dropLocation,
-      departureDateTime,
+      pickupLocation: pickupLocation.trim(),
+      dropLocation: dropLocation.trim(),
+      departureDateTime: parsedDeparture,
       totalSeats,
       availableSeats: totalSeats,
       estimatedCost,
@@ -103,10 +128,15 @@ export const updateRide = asyncHandler(async (req, res) => {
     );
   }
 
+  const parsedDeparture = departureDateTime ? new Date(departureDateTime) : undefined;
+  if (departureDateTime && isNaN(parsedDeparture.getTime())) {
+    throw new ApiError("Invalid departure date and time format", 400);
+  }
+
   Object.assign(ride, {
-    pickupLocation: pickupLocation ?? ride.pickupLocation,
-    dropLocation: dropLocation ?? ride.dropLocation,
-    departureDateTime: departureDateTime ?? ride.departureDateTime,
+    pickupLocation: pickupLocation ? pickupLocation.trim() : ride.pickupLocation,
+    dropLocation: dropLocation ? dropLocation.trim() : ride.dropLocation,
+    departureDateTime: parsedDeparture ?? ride.departureDateTime,
     totalSeats: totalSeats ?? ride.totalSeats,
     estimatedCost: estimatedCost ?? ride.estimatedCost,
     description: description ?? ride.description,
