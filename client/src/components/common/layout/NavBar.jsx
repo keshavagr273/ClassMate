@@ -19,12 +19,7 @@ const BellIcon = () => (
 );
 
 const LogoIcon = () => (
-  <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="56" height="56" rx="16" fill="#6366F1"/>
-    <path d="M28 16L46 24L28 32L10 24L28 16Z" fill="#fff"/>
-    <path d="M28 32V40" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
-    <ellipse cx="28" cy="40.5" rx="6" ry="2.5" fill="#fff" fillOpacity="0.7"/>
-  </svg>
+  <img src="/favicon.png" alt="ClassMate" className="w-9 h-9 rounded-xl object-contain shadow-sm" />
 );
 
 const NotificationPanel = ({ notifications, loading, onMarkAllRead }) => (
