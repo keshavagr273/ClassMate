@@ -1,0 +1,28 @@
+# Design & planning docs (local only)
+design.md
+prompt.md
+tokens.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Node
+node_modules/
+
+# Build output
+dist/
+dist-ssr/

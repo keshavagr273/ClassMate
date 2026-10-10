@@ -5,16 +5,15 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  Navigate,
 } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
 
 // Layout & Common Components
 import NavBar from "./components/common/layout/NavBar";
+import Footer from "./components/common/layout/Footer";
 import LoadingScreen from "./components/common/loading";
-import { ToastContainer, Slide } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./components/common/layout/ScrollToTop";
 
 // Route Protection Components
@@ -129,7 +128,9 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <div className="min-h-screen flex flex-col bg-[#151a1e]">
+      {/* Grain sits above the page and below nothing interactive. */}
+      <div className="grain" aria-hidden />
+      <div className="flex min-h-screen flex-col bg-canvas">
         <NavBar />
         <main className="flex-1">
           <Routes>
@@ -166,18 +167,25 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <Footer />
       </div>
-      <ToastContainer
+
+      {/* One toast provider. Seven files — including three Redux slices — were
+          already calling react-hot-toast with nothing mounted to receive it. */}
+      <Toaster
         position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
+        gutter={10}
+        toastOptions={{
+          duration: 4500,
+          className:
+            "!rounded-card !border !border-line-2 !bg-surface-2 !text-ui !text-ink !shadow-overlay",
+          success: { iconTheme: { primary: "#7fa37f", secondary: "#0e0f10" } },
+          error: {
+            duration: 6000,
+            iconTheme: { primary: "#c47c7c", secondary: "#0e0f10" },
+          },
+          loading: { iconTheme: { primary: "#a1a1a1", secondary: "#0e0f10" } },
+        }}
       />
     </BrowserRouter>
   );

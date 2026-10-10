@@ -1,108 +1,53 @@
 import React, { useEffect, useState } from "react";
+import { ProgressBar } from "../../ui";
 
+const messageFor = (progress) => {
+  if (progress < 30) return "Connecting to the database";
+  if (progress < 60) return "Starting up";
+  if (progress < 90) return "Loading your data";
+  return "Almost ready";
+};
+
+/**
+ * Full-screen boot gate. Previously this injected a raw <style> tag with its
+ * own keyframes and hardcoded #151a1e / #333, entirely outside the token
+ * layer, and derived its message from a second interval that read a stale
+ * `progress` from its closure — so the message never advanced. The message is
+ * now derived from progress directly, which removes the second timer.
+ */
 const LoadingScreen = () => {
   const [progress, setProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState("Connecting to database...");
 
   useEffect(() => {
-    // Simulate progress and update messages
     const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 90) return prev; // Stop at 90% until auth completes
-        return prev + 10;
-      });
+      // Hold at 90% until the real auth/health check resolves.
+      setProgress((prev) => (prev >= 90 ? prev : prev + 10));
     }, 500);
-
-    // Update loading message based on progress
-    const messageInterval = setInterval(() => {
-      setLoadingMessage(prev => {
-        if (progress < 30) return "Connecting to database...";
-        if (progress < 60) return "Initializing application...";
-        if (progress < 90) return "Loading user data...";
-        return "Almost ready...";
-      });
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(messageInterval);
-    };
-  }, [progress]);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <>
-      <style>
-        {`
-          body {
-            margin: 0;
-            overflow: hidden;
-          }
-          #loader {
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: 0;
-            bottom: 0;
-            z-index: 1000;
-            background: #151a1e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            -webkit-transition: 0.3s ease opacity;
-            transition: 0.3s ease opacity;
-          }
-          .loading-container {
-            text-align: center;
-          }
-          .loading-text {
-            color: #fff;
-            font-family: "Inter Tight", sans-serif;
-            font-size: 24px;
-            font-weight: 500;
-            text-align: center;
-            user-select: none;
-            margin-bottom: 20px;
-          }
-          .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #333;
-            border-top: 3px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-          }
-          .progress-bar {
-            width: 200px;
-            height: 4px;
-            background: #333;
-            border-radius: 2px;
-            overflow: hidden;
-            margin: 0 auto;
-          }
-          .progress-fill {
-            height: 100%;
-            background: #fff;
-            border-radius: 2px;
-            transition: width 0.3s ease;
-            width: ${progress}%;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
-      <div id="loader">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <div className="loading-text">{loadingMessage}</div>
-          <div className="progress-bar">
-            <div className="progress-fill"></div>
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-canvas px-6"
+    >
+      <div className="grain" aria-hidden />
+
+      <div className="flex w-full max-w-xs flex-col items-start gap-5">
+        <p className="font-display text-h3 font-bold tracking-tight text-ink">
+          ClassMate
+        </p>
+
+        <div className="w-full">
+          <ProgressBar value={progress} tone="ink" />
+          <div className="mt-3 flex items-baseline justify-between gap-4">
+            <p className="text-meta text-ink-3">{messageFor(progress)}</p>
+            <span className="numeric text-micro text-ink-4">{progress}%</span>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

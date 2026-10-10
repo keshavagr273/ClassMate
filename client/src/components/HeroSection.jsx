@@ -1,55 +1,106 @@
-import React from "react";
-import { motion } from "framer-motion";
-import collegeImage from '../public/assets/images/college.jpg';
+import React, { Suspense, lazy, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { ArrowDown } from "lucide-react";
+import { Button, Eyebrow } from "./ui";
+
+/** The only entry point to three.js in the app. Keeps it out of the main chunk. */
+const HeroLattice = lazy(() => import("./three/HeroLattice"));
+
+const stats = [
+  { value: "6", label: "Tools" },
+  { value: "1", label: "Login" },
+  { value: "IIIT", label: "Sonepat" },
+];
+
+/** CSS-only stand-in: used while the scene loads, and permanently if WebGL fails. */
+const LatticeFallback = () => (
+  <div
+    aria-hidden
+    className="absolute inset-0 hairline-grid opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_85%)]"
+  />
+);
 
 const HeroSection = ({ onExploreClick }) => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [bigScreen, setBigScreen] = useState(false);
+
+  // Both checks happen before the lazy boundary, so on a phone — or with
+  // reduced motion on — the three.js chunk is never fetched at all. On a
+  // narrow screen the scene would sit directly behind the headline and wreck
+  // its legibility, so it is desktop-only by design, not just by performance.
+  useEffect(() => {
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const wide = window.matchMedia("(min-width: 1024px)");
+
+    const sync = () => {
+      setReducedMotion(motion.matches);
+      setBigScreen(wide.matches);
+    };
+    sync();
+
+    motion.addEventListener("change", sync);
+    wide.addEventListener("change", sync);
+    return () => {
+      motion.removeEventListener("change", sync);
+      wide.removeEventListener("change", sync);
+    };
+  }, []);
+
   return (
-    <div
-      className="relative min-h-[320px] sm:min-h-[400px] md:min-h-[480px] w-full max-w-5xl mx-auto bg-cover bg-center bg-no-repeat rounded-lg shadow-lg flex items-center justify-center"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${collegeImage})`,
-        backgroundBlendMode: "darken"
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, ease: "easeOut" }}
-        className="backdrop-blur-md bg-black/40 p-4 sm:p-6 md:p-8 lg:p-12 rounded-xl text-center w-full max-w-2xl mx-2 sm:mx-4"
-      >
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-3 sm:mb-4 tracking-tight"
-        >
-          Welcome to IIIT Sonepat
-        </motion.h1>
+    <section className="relative overflow-hidden border-b border-line">
+      {/* The scene sits behind the type, bleeding to the right. */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] lg:block">
+        {bigScreen && (
+          <Suspense fallback={<LatticeFallback />}>
+            <HeroLattice reducedMotion={reducedMotion} />
+          </Suspense>
+        )}
+      </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-          className="text-gray-300 text-sm sm:text-base md:text-lg font-medium mb-4 sm:mb-6"
-        >
-          A hub for innovation, collaboration, and opportunities. Discover tools to connect, grow, and thrive in your academic journey.
-        </motion.p>
+      <div className="relative mx-auto w-full max-w-6xl px-5 py-24 sm:px-8 md:py-32 lg:px-10">
+        <div className="max-w-2xl">
+          <Eyebrow>For IIIT Sonepat</Eyebrow>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
-        >
-          <button
-            onClick={onExploreClick}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-md transition duration-300 ease-in-out text-sm sm:text-base"
-          >
-            Explore ClassMate
-          </button>
-        </motion.div>
-      </motion.div>
-    </div>
+          <h1 className="mt-6 font-display text-display text-ink">
+            One campus.
+            <br />
+            Every tool.
+          </h1>
+
+          <p className="mt-6 max-w-md text-body text-ink-3">
+            Attendance, skill swaps, rides, listings, lost property and
+            internships &mdash; in one place, behind one login.
+          </p>
+
+          <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <Button onClick={onExploreClick} trailingIcon={ArrowDown}>
+              Explore tools
+            </Button>
+            {!isAuthenticated && (
+              <Button as={Link} to="/login" variant="link">
+                Sign in &rarr;
+              </Button>
+            )}
+          </div>
+
+          <dl className="mt-16 flex items-end gap-10 border-t border-line pt-6">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <dd className="numeric font-display text-h3 font-bold text-ink">
+                  {stat.value}
+                </dd>
+                <dt className="mt-0.5 text-eyebrow uppercase text-ink-4">
+                  {stat.label}
+                </dt>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+    </section>
   );
 };
 
-export default HeroSection; 
+export default HeroSection;

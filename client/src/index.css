@@ -1,43 +1,424 @@
 @import "tailwindcss";
 
-html, body {
-  overflow-x: hidden;
-}
+/* ==========================================================================
+   ClassMate design tokens
+   Derived from tokens.md / design.md. Near-monochrome dark canvas, one accent,
+   structure carried by 1px hairlines rather than shadows.
+   ========================================================================== */
 
+@theme {
+  /* --- Surfaces. tokens.md Background #0E0F10, extended into a ramp. ------ */
+  --color-canvas: #0e0f10;
+  --color-surface: #141517;
+  --color-surface-2: #1a1c1e;
+  --color-surface-3: #212325;
+  --color-surface-4: #292b2d;
 
+  /* --- Hairlines. These do the work shadows used to do. ------------------- */
+  --color-line: #232527;
+  --color-line-2: #2e3133;
+  --color-line-3: #3a3d40;
 
+  /* --- Ink ramp. tokens.md Primary #F2FFF0, Text Primary #A1A1A1. --------- */
+  --color-ink: #f2fff0;
+  --color-ink-2: #a1a1a1;
+  --color-ink-3: #6f7173;
+  --color-ink-4: #4a4c4e;
 
-@keyframes shine {
-  100% {
-    left: 125%;
+  /* --- Accent. tokens.md Accent/Link #FCFFDF. Under ~5% of pixels. -------- */
+  --color-accent: #fcffdf;
+  --color-accent-dim: #d8dbbe;
+  --color-accent-faint: #2a2b22;
+
+  /* --- Secondary. tokens.md #975151. Doubles as destructive. -------------- */
+  --color-clay: #975151;
+  --color-clay-soft: #c47c7c;
+  --color-clay-faint: #2a1c1c;
+
+  /* --- Semantics. Saturated enough to read as colour on a near-black
+         canvas, muted enough not to turn candy. ---------------------------- */
+  --color-positive: #58c98e;
+  --color-positive-faint: #112620;
+  --color-caution: #dda94a;
+  --color-caution-faint: #272015;
+  --color-critical: #e5756f;
+  --color-critical-faint: #2a1718;
+
+  /* --- Tool hues. Each product surface owns one colour, used in small,
+         precise places: an icon chip, a hairline, a badge. This is where the
+         colour in the app comes from — not from washing whole panels in it. */
+  --color-skill: #9d8df1;
+  --color-skill-faint: #1b1830;
+  --color-pulse: #4fc3a1;
+  --color-pulse-faint: #10251f;
+  --color-bazaar: #e8a765;
+  --color-bazaar-faint: #2a1f13;
+  --color-found: #e58a8a;
+  --color-found-faint: #2a1a1a;
+  --color-ride: #63c7d6;
+  --color-ride-faint: #10242a;
+  --color-jobs: #74a7f0;
+  --color-jobs-faint: #141e2e;
+
+  /* --- Button faces. design.md: #E5E5E5 / #D6D6D6 on black, pill radius. -- */
+  --color-btn: #e5e5e5;
+  --color-btn-hover: #ffffff;
+  --color-btn-2: #d6d6d6;
+  --color-btn-2-hover: #e8e8e8;
+
+  /* --- Families. Satoshi self-hosted below; Inter via @fontsource. -------- */
+  --font-display: "Satoshi", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Type scale. tokens.md: H1 72, H2 44, body 18. Display sizes carry
+         negative tracking so headings never read as default-spaced. -------- */
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.18em;
+  --text-eyebrow--font-weight: 500;
+
+  --text-display: clamp(2.5rem, 7vw, 4.5rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 700;
+
+  --text-h1: clamp(2rem, 5vw, 3.25rem);
+  --text-h1--line-height: 1.03;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: clamp(1.75rem, 4vw, 2.75rem);
+  --text-h2--line-height: 1.06;
+  --text-h2--letter-spacing: -0.025em;
+  --text-h2--font-weight: 700;
+
+  --text-h3: 1.5rem;
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.02em;
+  --text-h3--font-weight: 600;
+
+  --text-h4: 1.125rem;
+  --text-h4--line-height: 1.35;
+  --text-h4--letter-spacing: -0.012em;
+  --text-h4--font-weight: 600;
+
+  --text-lead: 1.1875rem;
+  --text-lead--line-height: 1.6;
+
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.6;
+
+  --text-ui: 0.875rem;
+  --text-ui--line-height: 1.45;
+
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.4;
+
+  --text-micro: 0.75rem;
+  --text-micro--line-height: 1.35;
+
+  /* --- Shape. tokens.md borderRadius 12px; design.md buttons are pills. --- */
+  --radius-card: 0.75rem;
+  --radius-tile: 1rem;
+  --radius-input: 0.625rem;
+  --radius-chip: 0.5rem;
+
+  /* --- Depth. Only floating overlays get a shadow. ------------------------ */
+  --shadow-overlay: 0 24px 64px -16px rgb(0 0 0 / 0.72);
+  --shadow-pop: 0 12px 32px -12px rgb(0 0 0 / 0.64);
+
+  /* --- Motion. One entrance curve, one standard curve. -------------------- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-rise: rise 320ms var(--ease-entrance) both;
+  --animate-fade-in: fade-in 200ms var(--ease-standard) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }
-.animate-shine {
-  animation: shine 0.85s forwards; 
+
+/* ==========================================================================
+   Satoshi (display). Self-hosted under the ITF Free Font License, which keeps
+   a third-party CDN off the critical path. Files live in public/fonts/.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-900.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
 }
 
+/* ========================================================================== */
 
-@layer utilities {
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
-  .hide-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink-2);
+    font-family: var(--font-sans);
+    /* 16px for dense UI chrome; text-body (18px, per tokens.md) is applied
+       explicitly to prose and lead copy, where reading comfort matters. */
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+
+  /* Every figure in the app lines up in a column. */
+  th,
+  td,
+  time,
+  output,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-canvas);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Autofill previously forced a purple that matched no surface in the app. */
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-surface-2) inset !important;
+    -webkit-text-fill-color: var(--color-ink) !important;
+    caret-color: var(--color-ink);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-3) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-line-2);
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-line-3);
   }
 }
-input:-webkit-autofill,
-textarea:-webkit-autofill,
-select:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0px 1000px #261333 inset !important;
-  -webkit-text-fill-color: #fff !important;
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+/* Film grain at ~3.5%. The cheapest way to stop a flat dark UI from reading as
+   flat and digital. Mounted once in App.jsx.
+   A tiled PNG rather than an inline feTurbulence SVG on purpose: an SVG filter
+   on a full-bleed element is re-rasterized by the compositor on every repaint,
+   which would cost frames on the same page as the WebGL hero. This is one
+   cached GPU texture. */
+@utility grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("/noise.png");
+  background-repeat: repeat;
+  background-size: 128px 128px;
 }
 
-/* Hide scrollbars for elements with the no-scrollbar class */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* A 1px hairline grid. Also the no-WebGL fallback behind the hero. */
+@utility hairline-grid {
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none;    /* Firefox */
+
+@utility numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   react-datepicker. It ships a light-theme stylesheet that would otherwise
+   fight the token layer; this is the one third-party style surface in the app.
+   ========================================================================== */
+
+.react-datepicker-popper {
+  z-index: 40;
+}
+
+.react-datepicker {
+  font-family: var(--font-sans) !important;
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-line-2) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.react-datepicker__header {
+  background-color: var(--color-surface-2) !important;
+  border-bottom: 1px solid var(--color-line) !important;
+  padding-top: 0.75rem !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header {
+  color: var(--color-ink) !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+}
+
+.react-datepicker__day-name {
+  color: var(--color-ink-4) !important;
+  font-size: 0.6875rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.react-datepicker__day {
+  color: var(--color-ink-2) !important;
+  border-radius: 6px !important;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 150ms var(--ease-standard);
+}
+
+.react-datepicker__day:hover:not(.react-datepicker__day--disabled) {
+  background-color: var(--color-surface-3) !important;
+  color: var(--color-ink) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--color-accent) !important;
+  color: var(--color-canvas) !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--today:not(.react-datepicker__day--selected) {
+  color: var(--color-accent) !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--outside-month {
+  color: var(--color-ink-4) !important;
+}
+
+.react-datepicker__day--disabled {
+  color: var(--color-ink-4) !important;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: var(--color-ink-3) !important;
+}
+.react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+  border-color: var(--color-ink) !important;
+}
+
+.react-datepicker__triangle {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

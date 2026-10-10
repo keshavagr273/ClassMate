@@ -1,19 +1,17 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useSelector } from "react-redux";
 import {
-  Users,
+  Calendar,
   IndianRupee,
+  Pencil,
   Phone,
-  Edit,
   Trash2,
   User,
-  Loader2,
-  Eye,
-  Calendar,
+  Users,
 } from "lucide-react";
 import { formatDateTime, isRideActive } from "../../utils/dateUtils";
-import { useSelector } from "react-redux";
 import ParticipantsModal from "./ParticipantsModal";
+import { Badge, Button, Card, IconButton, cn } from "../ui";
 
 const RideCard = ({
   ride,
@@ -25,242 +23,161 @@ const RideCard = ({
   isLoading,
 }) => {
   const { roles } = useSelector((state) => state.auth);
+  const [showParticipants, setShowParticipants] = useState(false);
+
+  if (!ride) return null;
+
   const isAdmin = Array.isArray(roles) && roles.includes("admin");
   const isCreator = ride.creatorId === currentUser?.id;
   const hasJoined = ride.participants?.some(
     (p) => p.participant?.id === currentUser?.id
   );
-
-  const [showParticipants, setShowParticipants] = useState(false);
-
-  if (!ride) {
-    return <div className="p-6 text-red-500">Invalid ride data</div>;
-  }
-
   const isActive = isRideActive(ride.departureDateTime);
-  const cardStatusClass = isCreator
-    ? "border-l-4 border-purple-500"
+  const isFull = ride.availableSeats === 0;
+
+  // Status reads from a 2px left rule rather than a coloured glow.
+  const status = isCreator
+    ? { rule: "before:bg-accent", label: "Yours", tone: "accent" }
     : !isActive
-    ? "border-l-4 border-gray-500"
-    : ride.availableSeats === 0
-    ? "border-l-4 border-red-500"
-    : "border-l-4 border-green-500";
+      ? { rule: "before:bg-line-3", label: "Departed", tone: "neutral" }
+      : isFull
+        ? { rule: "before:bg-clay", label: "Full", tone: "critical" }
+        : { rule: "before:bg-positive", label: "Open", tone: "positive" };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{
-        y: -5,
-        boxShadow: "0 10px 30px -15px rgba(138, 75, 235, 0.3)",
-      }}
-
-      className={`p-5 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg shadow-lg ${cardStatusClass} overflow-hidden relative`}
-    >
-      {/* Background pattern for visual interest */}
-      <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_15%_50%,rgba(138,75,235,0.8),transparent_30%),radial-gradient(circle_at_85%_30%,rgba(59,130,246,0.8),transparent_30%)]"></div>
-
-      <div className="relative">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <motion.h2
-              layout
-              className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-300 mb-1"
-            >
-              {ride.pickupLocation} &rarr; {ride.dropLocation}
-            </motion.h2>
-            <div className="flex items-center text-gray-400 mb-1">
-              <Calendar className="w-4 h-4 mr-2 text-blue-400" />
-              <span>{formatDateTime(ride.departureDateTime)}</span>
-            </div>
-            <div className="flex items-center text-gray-400">
-              <User className="w-4 h-4 mr-2 text-purple-400" />
-              <span>
-                {ride.creator?.name || ride.creator?.email || "Anonymous"}
+    <>
+      <Card
+        padding="none"
+        className={cn(
+          "relative flex flex-col overflow-hidden",
+          "before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:content-['']",
+          status.rule
+        )}
+      >
+        <div className="flex flex-1 flex-col gap-4 p-5 pl-6">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="min-w-0 flex-1 text-h4 leading-snug text-ink">
+              {ride.pickupLocation}
+              <span className="mx-1.5 text-ink-4" aria-hidden>
+                →
               </span>
-            </div>
+              {ride.dropLocation}
+            </h3>
+            <Badge tone={status.tone}>{status.label}</Badge>
           </div>
 
-          <AnimatePresence>
-            <div className="flex space-x-2">
-              {ride.participants && ride.participants.length > 0 && (
-                <motion.button
-                  initial={{ scale: 1 }}
-                  whileHover={{ scale: 1.1, backgroundColor: "#9061F9" }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowParticipants(true)}
-                  className="bg-purple-600 p-2 rounded-full text-white transition-all shadow-md"
-                  aria-label="View participants"
-                >
-                  <Eye className="w-4 h-4" />
-                </motion.button>
-              )}
-              {(isCreator || isAdmin) && (
-                <>
-                  <motion.button
-                    initial={{ scale: 1 }}
-                    whileHover={{ scale: 1.1, backgroundColor: "#3B82F6" }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => onEdit(ride)}
-                    className="bg-blue-600 p-2 rounded-full text-white transition-all shadow-md"
-                    aria-label="Edit ride"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </motion.button>
-                  <motion.button
-                    initial={{ scale: 1 }}
-                    whileHover={{ scale: 1.1, backgroundColor: "#EF4444" }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => onDelete(ride.id)}
-                    className="bg-red-600 p-2 rounded-full text-white transition-all shadow-md"
-                    aria-label="Delete ride"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </motion.button>
-                </>
-              )}
+          <dl className="flex flex-col gap-2 border-t border-line pt-3 text-meta">
+            <div className="flex items-center gap-2">
+              <Calendar className="size-3.5 shrink-0 text-ink-4" aria-hidden />
+              <dt className="sr-only">Departs</dt>
+              <dd className="numeric text-ink-2">
+                {formatDateTime(ride.departureDateTime)}
+              </dd>
             </div>
-          </AnimatePresence>
-        </div>
-
-        {/* Details */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center text-gray-300">
-            <motion.div
-              className="flex items-center bg-purple-500/10 px-3 py-1 rounded-full"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Users className="w-4 h-4 mr-2 text-purple-400" />
-              <span>
-                {ride.availableSeats}/{ride.totalSeats} seats
-              </span>
-            </motion.div>
-            <motion.div
-              className="flex items-center bg-green-500/10 px-3 py-1 rounded-full"
-              whileHover={{ scale: 1.05 }}
-            >
-              <IndianRupee className="w-4 h-4 mr-1 text-green-400" />
-              <span>{ride.estimatedCost || "Free"}</span>
-            </motion.div>
-          </div>
-
-          {ride.phoneNumber && (
-            <motion.div
-              className="text-gray-300 flex items-center"
-              initial={{ opacity: 0.8 }}
-              whileHover={{ opacity: 1, x: 5 }}
-            >
-              <Phone className="w-4 h-4 mr-2 text-blue-400" />{" "}
-              {ride.phoneNumber}
-            </motion.div>
-          )}
-
-          {ride.description && (
-            <motion.div
-              className="bg-gray-800/50 p-3 rounded-lg mt-2 text-gray-300 text-sm italic border-l-2 border-purple-500/50"
-              initial={{ opacity: 0.8 }}
-              whileHover={{ opacity: 1 }}
-            >
-              "{ride.description}"
-            </motion.div>
-          )}
-
-          {ride.participants && ride.participants.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0.8 }}
-              whileHover={{ opacity: 1 }}
-              className="mt-3"
-            >
-              <p className="text-gray-400 mb-2 text-sm">Participants:</p>
-              <div className="flex flex-wrap gap-2">
-                {ride.participants.slice(0, 3).map((participant) => (
-                  <span
-                    key={participant.id}
-                    className="bg-blue-500/20 text-blue-200 text-xs px-3 py-1 rounded-full"
-                  >
-                    {participant.participant?.name ||
-                      participant.participant?.email}
-                  </span>
-                ))}
-                {ride.participants.length > 3 && (
-                  <span className="bg-purple-500/20 text-purple-200 text-xs px-3 py-1 rounded-full">
-                    +{ride.participants.length - 3} more
-                  </span>
-                )}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Users className="size-3.5 shrink-0 text-ink-4" aria-hidden />
+                <dt className="sr-only">Seats left</dt>
+                <dd className="numeric text-ink-2">
+                  {ride.availableSeats} left
+                </dd>
               </div>
-            </motion.div>
-          )}
-        </div>
+              {ride.costPerPerson != null && (
+                <div className="flex items-center gap-1.5">
+                  <IndianRupee
+                    className="size-3.5 shrink-0 text-ink-4"
+                    aria-hidden
+                  />
+                  <dt className="sr-only">Cost per person</dt>
+                  <dd className="numeric text-ink-2">{ride.costPerPerson}</dd>
+                </div>
+              )}
+            </div>
+            {ride.creator?.name && (
+              <div className="flex items-center gap-2">
+                <User className="size-3.5 shrink-0 text-ink-4" aria-hidden />
+                <dt className="sr-only">Offered by</dt>
+                <dd className="truncate text-ink-2">{ride.creator.name}</dd>
+              </div>
+            )}
+          </dl>
 
-        {/* Action Button */}
-        {!isCreator && isActive && (
-          <div className="mt-4">
-            {hasJoined ? (
-              <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => onUnjoin(ride.id)}
-                disabled={isLoading}
-                className={`w-full py-2 rounded-lg shadow-lg bg-gradient-to-r from-red-600 to-red-500 text-white transition-all ${
-                  isLoading ? "opacity-75 cursor-not-allowed" : ""
-                }`}
+          {ride.notes && (
+            <p className="line-clamp-2 text-meta text-ink-3">{ride.notes}</p>
+          )}
+
+          {ride.participants?.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowParticipants(true)}
+              className="self-start text-meta text-ink-4 underline decoration-line-3 underline-offset-4 transition-colors hover:text-ink"
+            >
+              {ride.participants.length} joined
+            </button>
+          )}
+
+          <div className="mt-auto flex items-center gap-1.5 border-t border-line pt-4">
+            {!isCreator &&
+              isActive &&
+              (hasJoined ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  loading={isLoading}
+                  onClick={() => onUnjoin(ride.id)}
+                >
+                  Leave ride
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  loading={isLoading}
+                  disabled={isFull}
+                  onClick={() => onJoin(ride.id)}
+                >
+                  {isFull ? "Full" : "Join ride"}
+                </Button>
+              ))}
+
+            {hasJoined && ride.creator?.contactNumber && (
+              <Button
+                as="a"
+                href={`tel:${ride.creator.contactNumber}`}
+                size="sm"
+                variant="ghost"
+                leadingIcon={Phone}
               >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Cancelling...
-                  </div>
-                ) : (
-                  "Cancel Join"
-                )}
-              </motion.button>
-            ) : (
-              <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => onJoin(ride.id)}
-                disabled={ride.availableSeats === 0 || isLoading}
-                className={`w-full py-2 rounded-lg shadow-lg transition-all ${
-                  ride.availableSeats === 0 || isLoading
-                    ? "bg-gray-600 cursor-not-allowed text-gray-300"
-                    : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                }`}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Joining...
-                  </div>
-                ) : ride.availableSeats === 0 ? (
-                  "No Seats Available"
-                ) : (
-                  "Join Ride"
-                )}
-              </motion.button>
+                Call
+              </Button>
+            )}
+
+            {(isCreator || isAdmin) && (
+              <div className="ml-auto flex items-center gap-0.5">
+                <IconButton
+                  icon={Pencil}
+                  label="Edit ride"
+                  size="sm"
+                  onClick={() => onEdit(ride)}
+                />
+                <IconButton
+                  icon={Trash2}
+                  label="Delete ride"
+                  variant="danger"
+                  size="sm"
+                  onClick={() => onDelete(ride.id)}
+                />
+              </div>
             )}
           </div>
-        )}
-
-        {isCreator && (
-          <motion.div
-            initial={{ opacity: 0.8 }}
-            whileHover={{ opacity: 1, scale: 1.02 }}
-            className="mt-4 text-center text-white font-medium bg-gradient-to-r from-purple-600/30 to-blue-600/30 py-2 rounded-lg border border-purple-500/20"
-          >
-            Your Ride Offering
-          </motion.div>
-        )}
-      </div>
+        </div>
+      </Card>
 
       <ParticipantsModal
         isOpen={showParticipants}
         onClose={() => setShowParticipants(false)}
         participants={ride.participants || []}
-        rideDetails={ride}
       />
-    </motion.div>
+    </>
   );
 };
 

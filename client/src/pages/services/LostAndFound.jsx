@@ -1,83 +1,77 @@
 // LostAndFound.jsx
-
-import React, { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  Rocket,
-  Search,
-  Plus,
-  Loader2 as Loader, // Use Loader2 for consistency
-  Camera,
-  MapPin as Map, // Use MapPin for consistency
-  Phone,
-  Tag,
-  Filter,
-  SortAsc,
-  AlertCircle,
-  X,
-  Image as ImageIcon, // Added for image preview
-} from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { ImageIcon, Plus, Search, SearchX, X } from "lucide-react";
 import {
-  fetchLostItems,
   addLostItem,
-  updateLostItem, // Import updateLostItem
   clearLostAndFoundError,
+  fetchLostItems,
+  updateLostItem,
 } from "../../slices/lostAndFoundSlice";
-import { LostItemCard } from "../../components/features/marketplace";
+import LostItemCard from "../../components/features/marketplace/LostItemCard";
+import {
+  Button,
+  Chip,
+  EmptyState,
+  Eyebrow,
+  IconButton,
+  Input,
+  Modal,
+  PageShell,
+  SectionHeader,
+  Select,
+  SkeletonCard,
+  Textarea,
+} from "../../components/ui";
+
+const categories = [
+  "Electronics",
+  "Documents",
+  "Keys",
+  "Wallets/Purses",
+  "Clothing",
+  "Accessories",
+  "Books/Notes",
+  "Cards",
+  "Other",
+];
+
+const emptyItem = {
+  item_name: "",
+  description: "",
+  location_found: "",
+  owner_contact: "",
+  category: "",
+  image: null,
+  image_url: null,
+};
 
 const LostAndFound = () => {
   const dispatch = useDispatch();
   const { items, loading, error } = useSelector((state) => state.lostAndFound);
   const { user } = useSelector((state) => state.auth);
 
-  const [activeTab, setActiveTab] = useState("browse");
+  const [isFormOpen, setFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [showFilters, setShowFilters] = useState(false);
-  const [notification, setNotification] = useState(null);
 
-  // State for edit mode
   const [isEditMode, setIsEditMode] = useState(false);
   const [editItemId, setEditItemId] = useState(null);
+  const [listingItem, setListingItem] = useState(emptyItem);
 
-  const [listingItem, setListingItem] = useState({
-    item_name: "",
-    description: "",
-    location_found: "",
-    owner_contact: "",
-    category: "",
-    image: null,
-    image_url: null, // To store existing image URL during edit
-  });
-
-  const categories = [
-    "Electronics",
-    "Documents",
-    "Keys",
-    "Wallets/Purses",
-    "Clothing",
-    "Accessories",
-    "Books/Notes",
-    "Cards",
-    "Other",
-  ];
+  // Replaces document.getElementById("imageUpload").value = "" in two places.
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (activeTab === "browse") {
-      dispatch(fetchLostItems());
-    }
-  }, [activeTab, dispatch]);
+    dispatch(fetchLostItems());
+  }, [dispatch]);
 
   useEffect(() => {
     if (error) {
-      setNotification({ type: "error", message: error });
-      const timer = setTimeout(() => {
-        dispatch(clearLostAndFoundError());
-        setNotification(null);
-      }, 2000);
-      return () => clearTimeout(timer);
+      toast.error(error);
+      dispatch(clearLostAndFoundError());
     }
   }, [error, dispatch]);
 
@@ -88,46 +82,33 @@ const LostAndFound = () => {
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        showNotification("Image size should be less than 5MB", "error");
-        return;
-      }
-      // Create a preview URL for the newly selected image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setListingItem((prev) => ({
-          ...prev,
-          image: file,
-          image_url: reader.result,
-        })); // Set image_url for preview
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Images need to be under 5MB.");
+      return;
     }
+    const reader = new FileReader();
+    reader.onloadend = () =>
+      setListingItem((prev) => ({
+        ...prev,
+        image: file,
+        image_url: reader.result,
+      }));
+    reader.readAsDataURL(file);
   };
 
   const clearImage = () => {
     setListingItem((prev) => ({ ...prev, image: null, image_url: null }));
-    // Reset the file input if needed
-    const fileInput = document.getElementById("imageUpload");
-    if (fileInput) {
-      fileInput.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const showNotification = (message, type = "success") => {
-    setNotification({ message, type });
-    if (window.lafNotificationTimeout) {
-      clearTimeout(window.lafNotificationTimeout);
-    }
-    window.lafNotificationTimeout = setTimeout(
-      () => setNotification(null),
-      4000
-    );
+  const resetFormAndState = () => {
+    setListingItem(emptyItem);
+    setIsEditMode(false);
+    setEditItemId(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Function to handle editing an item
   const handleEditItem = (item) => {
     setIsEditMode(true);
     setEditItemId(item.id);
@@ -137,314 +118,316 @@ const LostAndFound = () => {
       location_found: item.location_found || "",
       owner_contact: item.owner_contact || "",
       category: item.category || "",
-      image: null, // Reset image file input
-      image_url: item.image_url || null, // Keep existing image URL for preview
+      image: null,
+      image_url: item.image_url || null,
     });
-    setActiveTab("found"); // Switch to the form tab
+    setFormOpen(true);
   };
 
-  const resetFormAndState = () => {
-    setListingItem({
-      item_name: "",
-      description: "",
-      location_found: "",
-      owner_contact: "",
-      category: "",
-      image: null,
-      image_url: null,
-    });
-    setIsEditMode(false);
-    setEditItemId(null);
-    // Reset file input
-    const fileInput = document.getElementById("imageUpload");
-    if (fileInput) {
-      fileInput.value = "";
-    }
+  const closeForm = () => {
+    setFormOpen(false);
+    resetFormAndState();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic client-side validation example
     if (
       !listingItem.item_name ||
       !listingItem.category ||
       !listingItem.location_found ||
       !listingItem.owner_contact
     ) {
-      showNotification("Please fill in all required fields.", "error");
+      toast.error("Fill in the name, category, location and a contact number.");
       return;
     }
     if (!/^[6-9]\d{9}$/.test(listingItem.owner_contact)) {
-      showNotification(
-        "Please enter a valid 10-digit Indian mobile number.",
-        "error"
-      );
+      toast.error("That does not look like a 10-digit Indian mobile number.");
       return;
     }
 
+    // Keys come straight off listingItem, so the `name` attributes on the
+    // inputs below must keep matching its shape.
     const formData = new FormData();
-    // Append all fields except image_url
     Object.keys(listingItem).forEach((key) => {
-      if (key !== "image_url") {
-        // Only append image if it's a new file (not null)
-        if (key === "image" && listingItem[key]) {
-          formData.append(key, listingItem[key]);
-        } else if (key !== "image") {
-          // Append other fields, ensuring empty strings are sent if needed
-          formData.append(key, listingItem[key] || "");
-        }
+      if (key === "image_url") return;
+      if (key === "image") {
+        if (listingItem.image) formData.append(key, listingItem.image);
+      } else {
+        formData.append(key, listingItem[key] || "");
       }
     });
 
     try {
       if (isEditMode && editItemId) {
-        // Dispatch update action
         await dispatch(updateLostItem({ id: editItemId, formData })).unwrap();
-        showNotification("Item updated successfully!", "success");
+        toast.success("Report updated.");
       } else {
-        // Dispatch add action
         await dispatch(addLostItem(formData)).unwrap();
-        showNotification("Item reported successfully!", "success");
+        toast.success("Reported. Thanks for posting it.");
       }
-      resetFormAndState(); // Reset form and edit state
-      setActiveTab("browse"); // Go back to browse tab
+      closeForm();
     } catch (err) {
-      // Error message extraction improvement
-      const errorMessage =
+      toast.error(
         err?.payload ||
-        err.message ||
-        (isEditMode ? "Error updating item" : "Error reporting item");
-      showNotification(errorMessage, "error");
-      // Do not switch tab or reset form on error
+          err?.message ||
+          (isEditMode ? "Could not update that." : "Could not post that.")
+      );
     }
   };
 
-  const handleCancel = () => {
-    resetFormAndState();
-    setActiveTab("browse");
-  };
-
-  const filteredAndSortedItems = React.useMemo(() => {
-    let result = items.filter((item) => {
-      const lowerSearchTerm = searchTerm.toLowerCase();
+  const visibleItems = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    const result = items.filter((item) => {
       const matchesSearch =
-        item.item_name?.toLowerCase().includes(lowerSearchTerm) ||
-        item.description?.toLowerCase().includes(lowerSearchTerm) ||
-        item.location_found?.toLowerCase().includes(lowerSearchTerm);
+        !term ||
+        item.item_name?.toLowerCase().includes(term) ||
+        item.description?.toLowerCase().includes(term) ||
+        item.location_found?.toLowerCase().includes(term);
       const matchesCategory = !category || item.category === category;
       return matchesSearch && matchesCategory;
     });
 
-    switch (sortBy) {
-      case "newest":
-        return result.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-      case "oldest":
-        return result.sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        );
-      default:
-        return result;
-    }
+    return [...result].sort((a, b) =>
+      sortBy === "oldest"
+        ? new Date(a.createdAt) - new Date(b.createdAt)
+        : new Date(b.createdAt) - new Date(a.createdAt)
+    );
   }, [items, searchTerm, category, sortBy]);
 
-  // Separate loading state for initial fetch vs form submission
-  const initialLoading = loading && !items.length; // Loading only when items are empty
-  const formSubmitting = loading && activeTab === "found"; // Loading only when submitting form
+  const initialLoading = loading && !items.length;
+  const hasFilters = Boolean(searchTerm || category);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-black text-gray-300 flex flex-col">
-      <div className="layout-container flex h-full grow flex-col">
-        <div className="px-40 flex flex-1 justify-center py-5">
-          <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-            <div className="flex flex-wrap justify-between gap-3 p-4">
-              <p className="text-white tracking-light text-[32px] font-bold leading-tight min-w-72">Lost &amp; Found</p>
-              <button
-                className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#2b3640] text-white text-sm font-medium leading-normal"
-                onClick={() => { setActiveTab('found'); resetFormAndState(); }}
-              >
-                <span className="truncate">Report Item</span>
-              </button>
-            </div>
-            <h3 className="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Recently Reported</h3>
-            {/* Recently Reported List */}
-            {loading && !items.length ? (
-              <div className="flex items-center justify-center py-10">
-                <svg className="animate-spin h-10 w-10 text-[#9eadbd]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                <span className="ml-4 text-white text-lg font-medium">Loading Lost Items...</span>
-              </div>
-            ) : error && !items.length ? (
-              <div className="col-span-full text-center py-6 md:py-10 bg-red-900/20 rounded-lg border border-red-500/50">
-                <div className="flex flex-col items-center space-y-3">
-                  <svg className="text-red-400" width="36" height="36" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M12 9v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9Z"/></svg>
-                  <p className="text-red-300 text-base font-medium">Failed to load items</p>
-                  <p className="text-red-400 text-sm">{error}</p>
-                  <button
-                    onClick={() => dispatch(fetchLostItems())}
-                    className="mt-2 px-4 py-1.5 bg-yellow-500 text-black rounded-md text-sm font-medium hover:bg-yellow-400 transition-colors"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <svg className="animate-spin h-4 w-4 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                    ) : (
-                      "Retry"
-                    )}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              items.slice(0, 5).map((item) => (
-                <div key={item.id} className="p-4">
-                  <div className="flex items-stretch justify-between gap-4 rounded-xl">
-                    <div className="flex flex-[2_2_0px] flex-col gap-4">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-[#9eadbd] text-sm font-normal leading-normal">{item.is_found ? 'Found' : 'Lost'}</p>
-                        <p className="text-white text-base font-bold leading-tight">{item.item_name}</p>
-                        <p className="text-[#9eadbd] text-sm font-normal leading-normal">{item.is_found ? 'Found' : 'Lost'} on {item.date_found ? new Date(item.date_found).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown date'} at {item.location_found || 'Unknown location'}</p>
-                      </div>
-                      <button
-                        className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 flex-row-reverse bg-[#2b3640] text-white text-sm font-medium leading-normal w-fit"
-                        onClick={() => window.alert(`Contact: ${item.owner_contact || 'Not provided'}`)}
-                      >
-                        <span className="truncate">Contact Owner</span>
-                      </button>
-                    </div>
-                    <div
-                      className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl flex-1"
-                      style={{ backgroundImage: `url('${item.image_url || 'https://via.placeholder.com/400x225?text=No+Image'}')` }}
-                    ></div>
-                  </div>
-                </div>
-              ))
-            )}
-            {/* Report Item Form Modal */}
-            <AnimatePresence>
-              {activeTab === 'found' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                  <motion.form
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    onSubmit={handleSubmit}
-                    className="bg-[#2b3640] p-8 rounded-xl shadow-xl max-w-2xl w-full border border-white/10 flex flex-col gap-4 relative"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <button type="button" className="absolute top-4 right-4 text-white hover:text-[#9eadbd]" onClick={handleCancel}><X size={24} /></button>
-                    <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center text-white">{isEditMode ? 'Edit Reported Item' : 'Report Found Item'}</h2>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium mb-1 text-gray-300">Item Name *</label>
-                        <input
-                          type="text"
-                          name="item_name"
-                          value={listingItem.item_name}
-                          onChange={handleInputChange}
-                          className="w-full p-2.5 text-sm bg-[#151a1e] rounded-lg text-white focus:ring-2 focus:ring-yellow-500 focus:outline-none transition-all"
-                          required
-                          maxLength={100}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium mb-1 text-gray-300">Category *</label>
-                        <select
-                          name="category"
-                          value={listingItem.category}
-                          onChange={handleInputChange}
-                          className="w-full p-2.5 text-sm bg-[#151a1e] rounded-lg text-white focus:ring-2 focus:ring-yellow-500 focus:outline-none transition-all"
-                          required
-                        >
-                          <option value="">Select Category</option>
-                          {categories.map((cat) => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium mb-1 text-gray-300">Location Found *</label>
-                        <input
-                          type="text"
-                          name="location_found"
-                          value={listingItem.location_found}
-                          onChange={handleInputChange}
-                          className="w-full p-2.5 text-sm bg-[#151a1e] rounded-lg text-white focus:ring-2 focus:ring-yellow-500 focus:outline-none transition-all"
-                          required
-                          maxLength={100}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium mb-1 text-gray-300">Description</label>
-                        <textarea
-                          name="description"
-                          value={listingItem.description}
-                          onChange={handleInputChange}
-                          className="w-full p-2.5 text-sm bg-[#151a1e] rounded-lg text-white focus:ring-2 focus:ring-yellow-500 focus:outline-none transition-all"
-                          rows={3}
-                          maxLength={500}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium mb-1 text-gray-300">Contact Number *</label>
-                        <input
-                          type="tel"
-                          name="owner_contact"
-                          value={listingItem.owner_contact}
-                          onChange={handleInputChange}
-                          className="w-full p-2.5 text-sm bg-[#151a1e] rounded-lg text-white focus:ring-2 focus:ring-yellow-500 focus:outline-none transition-all"
-                          pattern="[0-9]{10}"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium mb-1 text-gray-300">Image</label>
-                        <input
-                          id="imageUpload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="w-full p-2.5 text-sm bg-[#151a1e] rounded-lg text-white"
-                        />
-                        {listingItem.image_url && (
-                          <div className="mt-2 flex items-center gap-2">
-                            <img src={listingItem.image_url} alt="Preview" className="h-20 rounded-lg object-cover" />
-                            <button type="button" onClick={clearImage} className="text-red-400 hover:text-red-600"><X size={20} /></button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="px-4 py-2 text-sm rounded-lg bg-[#23272e] text-white hover:bg-[#2b3640] transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-medium hover:shadow-lg hover:shadow-yellow-400/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {loading ? (
-                          <span className="flex items-center"><svg className="animate-spin mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>Submitting...</span>
-                        ) : isEditMode ? 'Update Item' : 'Report Item'}
-                      </button>
-                    </div>
-                  </motion.form>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {/* Notification */}
-            <AnimatePresence>
-              {notification && (
-                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg font-semibold ${notification.type === 'error' ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>{notification.message}</motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+    <PageShell width="wide">
+      <SectionHeader
+        eyebrow="FoundIt!"
+        tone="found"
+        rule
+        title="Lost and found"
+        description="Most things turn up within a day. Post what you lost, or what you picked up."
+        size="h2"
+        action={
+          <Button leadingIcon={Plus} onClick={() => setFormOpen(true)}>
+            Report an item
+          </Button>
+        }
+      />
+
+      {/* Search, category and sort. These controls existed only as unused
+          state before — the filter UI had been removed. */}
+      <div className="mt-10 flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input
+            type="search"
+            placeholder="Search by name, description or place"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            leadingIcon={Search}
+            wrapperClassName="flex-1"
+          />
+          <Select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="sm:w-44"
+            aria-label="Sort order"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </Select>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Chip active={!category} onClick={() => setCategory("")}>
+            All
+          </Chip>
+          {categories.map((cat) => (
+            <Chip
+              key={cat}
+              active={category === cat}
+              onClick={() => setCategory(cat)}
+            >
+              {cat}
+            </Chip>
+          ))}
         </div>
       </div>
-    </div>
+
+      {/* Results. No longer capped at five items. */}
+      <section className="mt-10">
+        <div className="flex items-baseline justify-between gap-4">
+          <Eyebrow>Reported</Eyebrow>
+          <span className="numeric text-micro text-ink-4">
+            {visibleItems.length}
+            {hasFilters && items.length ? ` of ${items.length}` : ""}
+          </span>
+        </div>
+
+        {initialLoading ? (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : visibleItems.length > 0 ? (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleItems.map((item) => (
+              <LostItemCard
+                key={item.id}
+                item={item}
+                onEdit={handleEditItem}
+                canEdit={Boolean(user) && item.user_id === user?.id}
+              />
+            ))}
+          </div>
+        ) : hasFilters ? (
+          <div className="mt-6">
+            <EmptyState
+              icon={SearchX}
+              title="Nothing matches those filters"
+              description="Try a different category, or clear the search."
+              action={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setCategory("");
+                  }}
+                >
+                  Clear filters
+                </Button>
+              }
+            />
+          </div>
+        ) : (
+          <div className="mt-6">
+            <EmptyState
+              icon={ImageIcon}
+              title="Nothing has been reported yet"
+              description="If you have lost something or found something lying around, post it here."
+              action={
+                <Button size="sm" onClick={() => setFormOpen(true)}>
+                  Report an item
+                </Button>
+              }
+            />
+          </div>
+        )}
+      </section>
+
+      {/* Report / edit form */}
+      <Modal
+        open={isFormOpen}
+        onClose={closeForm}
+        size="xl"
+        title={isEditMode ? "Edit report" : "Report an item"}
+        description={
+          isEditMode
+            ? "Update the details on this report."
+            : "The more specific the location, the faster it gets claimed."
+        }
+        footer={
+          <>
+            <Button variant="ghost" onClick={closeForm}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} loading={loading}>
+              {isEditMode ? "Save changes" : "Post report"}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <Input
+            name="item_name"
+            label="What is it"
+            required
+            value={listingItem.item_name}
+            onChange={handleInputChange}
+            placeholder="e.g. Black Casio calculator"
+          />
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Select
+              name="category"
+              label="Category"
+              required
+              value={listingItem.category}
+              onChange={handleInputChange}
+            >
+              <option value="">Select a category</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </Select>
+
+            <Input
+              name="location_found"
+              label="Where"
+              required
+              value={listingItem.location_found}
+              onChange={handleInputChange}
+              placeholder="e.g. Lecture hall 3"
+            />
+          </div>
+
+          <Input
+            name="owner_contact"
+            label="Contact number"
+            required
+            inputMode="numeric"
+            value={listingItem.owner_contact}
+            onChange={handleInputChange}
+            placeholder="10-digit mobile number"
+            hint="Shown to whoever wants to return or claim the item."
+          />
+
+          <Textarea
+            name="description"
+            label="Description"
+            rows={3}
+            value={listingItem.description}
+            onChange={handleInputChange}
+            placeholder="Any detail that proves ownership — a sticker, a scratch, what was inside."
+          />
+
+          <div className="flex flex-col gap-2">
+            <span className="text-meta font-medium text-ink-2">Photo</span>
+
+            {listingItem.image_url ? (
+              <div className="relative w-fit">
+                <img
+                  src={listingItem.image_url}
+                  alt="Preview"
+                  className="h-36 rounded-card border border-line object-cover"
+                />
+                <IconButton
+                  icon={X}
+                  label="Remove photo"
+                  variant="subtle"
+                  size="sm"
+                  onClick={clearImage}
+                  className="absolute -right-2 -top-2"
+                />
+              </div>
+            ) : null}
+
+            <input
+              ref={fileInputRef}
+              id="imageUpload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full cursor-pointer text-meta text-ink-3 file:mr-3 file:cursor-pointer file:rounded-full file:border file:border-line-2 file:bg-surface-2 file:px-4 file:py-1.5 file:text-meta file:font-medium file:text-ink hover:file:bg-surface-3"
+            />
+            <p className="text-micro text-ink-4">Up to 5MB.</p>
+          </div>
+        </form>
+      </Modal>
+    </PageShell>
   );
 };
 

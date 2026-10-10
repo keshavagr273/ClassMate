@@ -1,15 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { LayoutGrid, List, Search, UserPlus, Users } from "lucide-react";
 import { fetchAllUsers } from "../../slices/authSlice";
 import UserCard from "./UserCard";
-import { TailSpin } from "react-loader-spinner";
+import ErrorDisplay from "../../utils/ErrorDisplay";
 import {
-  FiSearch,
-  FiUsers,
-  FiUserPlus,
-  FiGrid,
-  FiList
-} from "react-icons/fi";
+  Card,
+  EmptyState,
+  Eyebrow,
+  IconButton,
+  Input,
+  SectionHeader,
+  Select,
+  SkeletonCard,
+  Table,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
+} from "../ui";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -23,158 +33,174 @@ const AdminDashboard = () => {
     dispatch(fetchAllUsers());
   }, [dispatch]);
 
-  const filteredUsers = allUsers
-    .filter((user) => {
-      const matchesSearch =
-        !searchTerm ||
-        (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (user.id && user.id.toString().includes(searchTerm));
-      return matchesSearch;
-    })
-    .sort((a, b) => {
-      switch (sortOption) {
-        case "newest":
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        case "oldest":
-          return new Date(a.createdAt) - new Date(b.createdAt);
-        case "alphabetical":
-          return (a.name || "").localeCompare(b.name || "");
-        default:
-          return 0;
-      }
-    });
+  const filteredUsers = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return allUsers
+      .filter(
+        (user) =>
+          !term ||
+          user.name?.toLowerCase().includes(term) ||
+          user.email?.toLowerCase().includes(term) ||
+          user.id?.toString().includes(searchTerm)
+      )
+      .sort((a, b) => {
+        switch (sortOption) {
+          case "oldest":
+            return new Date(a.createdAt) - new Date(b.createdAt);
+          case "alphabetical":
+            return (a.name || "").localeCompare(b.name || "");
+          default:
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+      });
+  }, [allUsers, searchTerm, sortOption]);
 
-  const totalUsers = allUsers.length;
-  const recentUsers = allUsers.filter((user) => {
+  const recentUsers = useMemo(() => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    return new Date(user.createdAt) > oneWeekAgo;
-  }).length;
+    return allUsers.filter((user) => new Date(user.createdAt) > oneWeekAgo)
+      .length;
+  }, [allUsers]);
 
   return (
-    <div className="p-4 md:p-6 animate-fadeIn">
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-          Admin User Control Center
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Supervise, filter, and act on all users in your system
-        </p>
+    <div>
+      <SectionHeader
+        eyebrow="Users"
+        title="User control"
+        description="Everyone with a ClassMate account, and when they joined."
+        size="h2"
+      />
+
+      {/* Two stat tiles. The old grid declared four columns for two tiles. */}
+      <dl className="mt-8 grid gap-4 sm:grid-cols-2">
+        {[
+          [Users, "Total users", allUsers.length],
+          [UserPlus, "Joined this week", recentUsers],
+        ].map(([Icon, label, value]) => (
+          <Card key={label} className="flex items-center gap-4">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-chip border border-line-2 bg-surface-2 text-ink-3">
+              <Icon className="size-[18px]" aria-hidden />
+            </span>
+            <div>
+              <dd className="numeric font-display text-h3 font-bold text-ink">
+                {value}
+              </dd>
+              <dt className="text-eyebrow uppercase text-ink-4">{label}</dt>
+            </div>
+          </Card>
+        ))}
+      </dl>
+
+      {/* Toolbar */}
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Input
+          type="search"
+          placeholder="Search by name, email or ID"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          leadingIcon={Search}
+          wrapperClassName="flex-1"
+        />
+        <Select
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+          className="sm:w-44"
+          aria-label="Sort order"
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="alphabetical">Name (A–Z)</option>
+        </Select>
+        <div className="flex gap-1 rounded-chip border border-line p-0.5">
+          <IconButton
+            icon={LayoutGrid}
+            label="Grid view"
+            size="sm"
+            onClick={() => setViewMode("grid")}
+            className={
+              viewMode === "grid" ? "bg-surface-3 text-ink" : undefined
+            }
+          />
+          <IconButton
+            icon={List}
+            label="List view"
+            size="sm"
+            onClick={() => setViewMode("list")}
+            className={
+              viewMode === "list" ? "bg-surface-3 text-ink" : undefined
+            }
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-xl p-5 border border-gray-700 shadow-xl">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-blue-800 text-cyan-300">
-              <FiUsers size={24} />
-            </div>
-            <div className="ml-4">
-              <p className="text-gray-400 text-xs uppercase">Total Users</p>
-              <h3 className="text-3xl font-bold text-white">{totalUsers}</h3>
-            </div>
-          </div>
+      {error && (
+        <div className="mt-6">
+          <ErrorDisplay
+            error={error}
+            onRetry={() => dispatch(fetchAllUsers())}
+            messagePrefix="Users: "
+          />
+        </div>
+      )}
+
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between gap-4">
+          <Eyebrow>Accounts</Eyebrow>
+          <span className="numeric text-micro text-ink-4">
+            {filteredUsers.length}
+            {searchTerm && allUsers.length ? ` of ${allUsers.length}` : ""}
+          </span>
         </div>
 
-        <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-xl p-5 border border-gray-700 shadow-xl">
-          <div className="flex items-center">
-            <div className="p-3 rounded-lg bg-green-800 text-green-300">
-              <FiUserPlus size={24} />
+        <div className="mt-6">
+          {isLoading ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
-            <div className="ml-4">
-              <p className="text-gray-400 text-xs uppercase">New This Week</p>
-              <h3 className="text-3xl font-bold text-white">{recentUsers}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-gray-900 bg-opacity-50 rounded-xl p-5 mb-6 border border-gray-700">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="relative flex-grow max-w-md">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search users by name, email or ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-950 border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          ) : filteredUsers.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title={searchTerm ? "Nobody matches that search" : "No users yet"}
+              description={
+                searchTerm
+                  ? "Try a different name, email or ID."
+                  : "Accounts will appear here as students sign up."
+              }
             />
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-              className="bg-gray-950 border border-gray-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="alphabetical">Name (A-Z)</option>
-            </select>
-
-            <div className="flex rounded-lg overflow-hidden border border-gray-700">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 flex items-center transition ${
-                  viewMode === "grid"
-                    ? "bg-cyan-600 text-white"
-                    : "bg-gray-950 text-gray-400 hover:text-white"
-                }`}
-              >
-                <FiGrid size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 flex items-center transition ${
-                  viewMode === "list"
-                    ? "bg-cyan-600 text-white"
-                    : "bg-gray-950 text-gray-400 hover:text-white"
-                }`}
-              >
-                <FiList size={18} />
-              </button>
+          ) : viewMode === "grid" ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredUsers.map((user) => (
+                <UserCard key={user.id} user={user} />
+              ))}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {isLoading && (
-        <div className="flex justify-center items-center py-16">
-          <TailSpin color="#00BFFF" height={50} width={50} />
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredUsers.map((user) => (
-              <UserCard key={user.id} user={user} />
-            ))}
-          </div>
-        ) : (
-          <div className="overflow-x-auto bg-gray-950 border border-gray-800 rounded-xl">
-            <table className="w-full text-sm text-left text-gray-400">
-              <thead className="text-xs uppercase bg-gray-800 text-gray-400">
-                <tr>
-                  <th scope="col" className="px-6 py-3">Name</th>
-                  <th scope="col" className="px-6 py-3">Email</th>
-                  <th scope="col" className="px-6 py-3">Created</th>
-                </tr>
-              </thead>
-              <tbody>
+          ) : (
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Name</TH>
+                  <TH>Email</TH>
+                  <TH>Joined</TH>
+                </TR>
+              </THead>
+              <TBody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-700 hover:bg-gray-800">
-                    <td className="px-6 py-4 font-medium text-white whitespace-nowrap">{user.name}</td>
-                    <td className="px-6 py-4">{user.email}</td>
-                    <td className="px-6 py-4">{new Date(user.createdAt).toLocaleDateString()}</td>
-                  </tr>
+                  <TR key={user.id} interactive>
+                    <TD className="font-medium text-ink">{user.name || "—"}</TD>
+                    <TD>{user.email}</TD>
+                    <TD>
+                      <time>
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </time>
+                    </TD>
+                  </TR>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )
-      )}
+              </TBody>
+            </Table>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

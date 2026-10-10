@@ -1,85 +1,49 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { ArrowLeft, RotateCw } from "lucide-react";
+import { Button, Eyebrow, PageShell } from "../../components/ui";
 
-const ServerError = () => {
-  return (
-    <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Animated glitch background */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-600 via-blue-500 to-purple-800 animate-pulse" />
+const ServerError = () => (
+  <PageShell width="default" className="py-20 md:py-28">
+    <div className="grid gap-12 lg:grid-cols-12">
+      <div className="lg:col-span-7">
+        <Eyebrow>Error 500</Eyebrow>
+
+        <p className="numeric mt-6 font-display text-display font-bold text-ink-4 select-none">
+          500
+        </p>
+
+        <h1 className="mt-4 text-h2 text-ink">Something broke on our side.</h1>
+
+        <p className="mt-4 max-w-prose text-body text-ink-3">
+          The request reached the server but it could not finish. This is not
+          something you did wrong. Retrying often works, since most of these are
+          momentary.
+        </p>
+
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Button
+            leadingIcon={RotateCw}
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
+          <Button as={Link} to="/" variant="outline" leadingIcon={ArrowLeft}>
+            Back to home
+          </Button>
+        </div>
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: -60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-9xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-cyan-400 to-purple-600 drop-shadow-lg">
-            500
-          </h1>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h2 className="text-2xl md:text-3xl text-white mb-6">
-            System Glitched!
-          </h2>
-          <p className="text-cyan-300 mb-8 max-w-md mx-auto">
-            Something unexpected fried the circuits. Our devs are debugging the matrix as we speak.
-          </p>
-
-          <div className="space-x-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.reload()}
-              className="px-8 py-3 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold
-                         hover:from-pink-700 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-pink-500/30"
-            >
-              Retry Connection
-            </motion.button>
-
-            <Link to="/">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-8 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold
-                           hover:from-cyan-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-cyan-500/30"
-              >
-                Go to Dashboard
-              </motion.button>
-            </Link>
-          </div>
-        </motion.div>
+      <div className="lg:col-span-4 lg:col-start-9">
+        <Eyebrow>If it keeps happening</Eyebrow>
+        <p className="mt-4 border-t border-line pt-4 text-ui text-ink-3">
+          Note what you were doing when it failed and report it to the ClassMate
+          team. Details about the exact page and action make it far quicker to
+          track down.
+        </p>
       </div>
-
-      {/* Neon warning orbs */}
-      {[...Array(4)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-3 h-3 rounded-full"
-          style={{
-            top: `${25 + i * 20}%`,
-            left: `${15 + i * 10}%`,
-            backgroundColor: "#ff00ff",
-            boxShadow: "0 0 8px #ff00ff",
-          }}
-          animate={{ opacity: [1, 0.2, 1] }}
-          transition={{
-            duration: 2.2,
-            delay: i * 0.4,
-            repeat: Infinity,
-          }}
-        />
-      ))}
     </div>
-  );
-};
+  </PageShell>
+);
 
 export default ServerError;

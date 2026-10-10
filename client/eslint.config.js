@@ -29,6 +29,21 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
+      // This is plain JSX with no TypeScript and no propTypes convention
+      // anywhere, so the rule only produced several hundred lines of noise and
+      // buried the two rules that represent real runtime crashes.
+      'react/prop-types': 'off',
+      // `import React` is no longer required now that @vitejs/plugin-react
+      // provides the automatic JSX runtime, but the ui/ primitives still use
+      // React.forwardRef, so the import stays legitimate in many files.
+      'no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: '^(React|_)',
+          argsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

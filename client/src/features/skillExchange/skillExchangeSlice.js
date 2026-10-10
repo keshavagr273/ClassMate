@@ -48,6 +48,18 @@ export const addUserSkill = createAsyncThunk('skillExchange/addUserSkill', async
   }
 });
 
+// This call used to live inline in SkillExchangeDashboard as a raw
+// axios.delete, re-deriving the base URL and withCredentials that the `api`
+// instance above already owns.
+export const deleteUserSkill = createAsyncThunk('skillExchange/deleteUserSkill', async (userSkillId, { rejectWithValue }) => {
+  try {
+    await api.delete(`/user-skill/${userSkillId}`);
+    return userSkillId;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to delete skill');
+  }
+});
+
 export const sendSkillRequest = createAsyncThunk('skillExchange/sendSkillRequest', async ({ recipientId, skillId, message }, { rejectWithValue }) => {
   try {
     const res = await api.post('/request', { recipientId, skillId, message });

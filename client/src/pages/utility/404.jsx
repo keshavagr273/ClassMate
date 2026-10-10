@@ -1,27 +1,66 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button, Eyebrow, PageShell } from "../../components/ui";
+
+const suggestions = [
+  { label: "Attendance", to: "/attendance" },
+  { label: "Marketplace", to: "/marketplace" },
+  { label: "Rides", to: "/rides" },
+  { label: "Lost and found", to: "/lost-found" },
+];
 
 const NotFoundPage = () => {
+  const { pathname } = useLocation();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F4A460] via-[#f7b17c] to-[#ffe0c2] text-white">
-      <div className="text-center px-6 max-w-xl mt-[-60px]">
-        <h1 className="text-9xl font-extrabold text-[#8B0000] mb-6 drop-shadow-md">
-          404
-        </h1>
-        <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
-          Oops! You've hit a dead end.
-        </h2>
-        <p className="text-white/90 text-lg md:text-2xl mb-8 leading-relaxed font-medium">
-          The page you're looking for might have been removed or never existed. Let's get you back to safety.
-        </p>
-        <Link
-          to="/"
-          className="bg-[#8B0000] hover:bg-[#a30000] text-white font-bold text-lg md:text-2xl py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out inline-block"
-        >
-          ⬅ Return to Dashboard
-        </Link>
+    <PageShell width="default" className="py-20 md:py-28">
+      <div className="grid gap-12 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <Eyebrow>Error 404</Eyebrow>
+
+          <p className="numeric mt-6 font-display text-display font-bold text-ink-4 select-none">
+            404
+          </p>
+
+          <h1 className="mt-4 text-h2 text-ink">This page does not exist.</h1>
+
+          <p className="mt-4 max-w-prose text-body text-ink-3">
+            Nothing is served at{" "}
+            <code className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-meta text-ink-2">
+              {pathname}
+            </code>
+            . It may have been renamed, or the link that brought you here was
+            wrong.
+          </p>
+
+          <div className="mt-8">
+            <Button as={Link} to="/" leadingIcon={ArrowLeft}>
+              Back to home
+            </Button>
+          </div>
+        </div>
+
+        <div className="lg:col-span-4 lg:col-start-9">
+          <Eyebrow>Try instead</Eyebrow>
+          <ul className="mt-4 border-t border-line">
+            {suggestions.map((item) => (
+              <li key={item.to} className="border-b border-line">
+                <Link
+                  to={item.to}
+                  className="flex items-center justify-between py-3.5 text-ui text-ink-2 transition-colors duration-150 hover:text-ink"
+                >
+                  {item.label}
+                  <span className="text-ink-4" aria-hidden>
+                    &rarr;
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
+    </PageShell>
   );
 };
 

@@ -1,30 +1,36 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Eyebrow } from "./ui";
 
-const SpotlightCard = ({ image, title, subtitle, description, link }) => {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.03 }}
-      className="bg-[#182634] border border-[#314d68] rounded-lg overflow-hidden shadow-md transition-shadow duration-300"
-    >
+/**
+ * Student spotlight card. Despite the name there was never a spotlight effect;
+ * it was a plain card mixing two palettes, with a `transition-shadow` that had
+ * no hover shadow to transition to. Now a hairline surface with a
+ * full-colour image that eases in on hover.
+ */
+const SpotlightCard = ({ image, title, subtitle, description, link }) => (
+  <Link
+    to={link}
+    className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface transition-colors duration-200 ease-standard hover:border-line-3"
+  >
+    <div className="aspect-[16/10] overflow-hidden bg-surface-2">
       <img
         src={image}
-        alt={title}
-        className="w-full h-32 sm:h-36 md:h-40 object-cover"
+        alt=""
+        loading="lazy"
+        className="size-full object-cover transition-transform duration-500 ease-standard group-hover:scale-[1.03]"
       />
-      <div className="p-3 sm:p-4 flex flex-col h-full">
-        <h3 className="text-white text-base sm:text-lg font-bold">{title}</h3>
-        <p className="text-[#90adcb] text-xs sm:text-sm">{subtitle}</p>
-        <p className="text-gray-400 text-xs sm:text-sm mt-2 flex-grow">{description}</p>
-        <Link to={link}>
-          <button className="mt-3 sm:mt-4 text-xs sm:text-sm font-semibold text-[#0c7ff2] hover:underline">
-            Read More →
-          </button>
-        </Link>
-      </div>
-    </motion.div>
-  );
-};
+    </div>
 
-export default SpotlightCard; 
+    <div className="flex flex-1 flex-col gap-2 p-5">
+      <Eyebrow>{subtitle}</Eyebrow>
+      <h3 className="text-h4 text-ink">{title}</h3>
+      <p className="text-meta text-ink-3">{description}</p>
+      <span className="mt-auto pt-3 text-meta text-ink-4 transition-colors duration-200 group-hover:text-accent">
+        Read more &rarr;
+      </span>
+    </div>
+  </Link>
+);
+
+export default SpotlightCard;

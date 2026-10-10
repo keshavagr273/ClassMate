@@ -1,56 +1,55 @@
 import React from "react";
-import { FiCheckCircle, FiXCircle, FiEdit2 } from "react-icons/fi";
-import { format, parseISO, isValid } from "date-fns";
+import { Check, Pencil, X } from "lucide-react";
+import { format, isValid, parseISO } from "date-fns";
+import { IconButton, cn } from "../ui";
 
-const AttendanceRecordItem = ({
-    themeStyles,
-    record,
-    onEditClick,
-    isActionDisabled,
-}) => {
-    const handleEdit = () => {
-        onEditClick("edit", record);
-    };
+const AttendanceRecordItem = ({ record, onEditClick, isActionDisabled }) => {
+  const present = record.status === "Present";
 
-    return (
-        <div
-            key={record.id}
-            className={`flex items-center justify-between p-3 rounded-lg transition-colors border ${themeStyles.borderColor} bg-gray-800/20 hover:bg-gray-700/40`}
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-line py-3 last:border-0">
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          className={cn(
+            "flex size-7 shrink-0 items-center justify-center rounded-full border",
+            present
+              ? "border-positive/30 bg-positive-faint text-positive"
+              : "border-clay/30 bg-clay-faint text-clay-soft"
+          )}
         >
-            <div className="flex items-center">
-                {record.status === "Present" ? (
-                    <FiCheckCircle className="text-green-500 mr-3 text-xl flex-shrink-0" />
-                ) : (
-                    <FiXCircle className="text-red-500 mr-3 text-xl flex-shrink-0" />
-                )}
-                <div>
-                    <p
-                        className={`text-sm font-semibold ${
-                            record.status === "Present" ? "text-green-400" : "text-red-400"
-                        }`}
-                    >
-                        {record.status}
-                    </p>
-                    {record.markedAt && isValid(parseISO(record.markedAt)) && (
-                        <p className="text-xs text-gray-500">
-                            Marked at {format(parseISO(record.markedAt), "HH:mm")}
-                        </p>
-                    )}
-                </div>
-            </div>
-            <button
-                onClick={handleEdit}
-                className={`p-1.5 rounded-md text-gray-400 hover:text-amber-400 hover:bg-gray-700/60 transition-all ${
-                    isActionDisabled ? "cursor-not-allowed opacity-50" : ""
-                }`}
-                title="Edit Attendance Status"
-                aria-label="Edit Attendance Status"
-                disabled={isActionDisabled}
-            >
-                <FiEdit2 size={16} />
-            </button>
+          {present ? (
+            <Check className="size-3.5" aria-hidden />
+          ) : (
+            <X className="size-3.5" aria-hidden />
+          )}
+        </span>
+
+        <div className="min-w-0">
+          <p
+            className={cn(
+              "text-ui font-medium",
+              present ? "text-positive" : "text-clay-soft"
+            )}
+          >
+            {record.status}
+          </p>
+          {record.markedAt && isValid(parseISO(record.markedAt)) && (
+            <time className="text-micro text-ink-4">
+              Marked at {format(parseISO(record.markedAt), "HH:mm")}
+            </time>
+          )}
         </div>
-    );
+      </div>
+
+      <IconButton
+        icon={Pencil}
+        label="Edit attendance status"
+        size="sm"
+        onClick={() => onEditClick("edit", record)}
+        disabled={isActionDisabled}
+      />
+    </div>
+  );
 };
 
 export default AttendanceRecordItem;

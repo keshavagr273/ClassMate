@@ -1,62 +1,66 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Car, AlertTriangle, Plus } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { formatDateTime, formatDate, formatTime, isRideActive } from "../../utils/dateUtils";
-import RideHeader from "../../components/rides/RideHeader";
+import toast from "react-hot-toast";
+import { Car, Plus, SearchX } from "lucide-react";
 import RideFilters from "../../components/rides/RideFilters";
 import RideGrid from "../../components/rides/RideGrid";
 import RideFormModal from "../../components/rides/RideFormModal";
 import {
+  createRide,
+  deleteRide,
   getAllRides,
   getUserRides,
-  createRide,
-  updateRide,
-  deleteRide,
-  setSearchTerm,
-  setFilters,
   joinRide,
+  setFilters,
+  setSearchTerm,
   unjoinRide,
+  updateRide,
 } from "../../slices/ridesSlice";
+import {
+  Button,
+  EmptyState,
+  Eyebrow,
+  Modal,
+  PageShell,
+  SectionHeader,
+  SkeletonCard,
+} from "../../components/ui";
+
+const emptyFilters = {
+  timeFrame: null,
+  dateRange: null,
+  minSeats: null,
+  maxPrice: null,
+  direction: null,
+  startDate: null,
+  endDate: null,
+};
 
 const RideShare = () => {
   const dispatch = useDispatch();
-  const {
-    rides,
-    loading,
-    error,
-    filteredRides,
-    activeFilterCount,
-    searchTerm,
-    filters,
-  } = useSelector((state) => state.rides);
+  const { rides, loading, error, filteredRides, searchTerm, filters } =
+    useSelector((state) => state.rides);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRide, setEditingRide] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedRide, setSelectedRide] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingRideId, setLoadingRideId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const fetchRides = async () => {
-        try {
-          await dispatch(getAllRides());
-          await dispatch(getUserRides());
-        } catch (err) {
-          console.error("Error fetching rides:", err);
-        }
-      };
-      fetchRides();
+      dispatch(getAllRides());
+      dispatch(getUserRides());
     }
   }, [dispatch, isAuthenticated, user]);
 
-  const handleSearchChange = (e) => {
-    dispatch(setSearchTerm(e.target.value));
-  };
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
+
+  /* --------------------------------------------------------------- actions */
 
   const handleFormSubmit = async (formData) => {
     if (isSubmitting) return;
@@ -69,305 +73,207 @@ const RideShare = () => {
             formData: { ...formData, creatorId: user.id },
           })
         ).unwrap();
+        toast.success("Ride updated.");
         setEditingRide(null);
       } else {
         await dispatch(createRide({ ...formData, creatorId: user.id })).unwrap();
+        toast.success("Ride posted.");
       }
       setIsFormOpen(false);
     } catch (err) {
-      console.error("Error submitting ride:", err);
-      alert(err.message || "Failed to save ride.");
+      toast.error(err?.message || "Could not save that ride.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleViewDetails = (ride) => {
-    setSelectedRide(ride);
-    setDetailsModalOpen(true);
-  };
-
+  // Join/unjoin live here only. RideGrid used to dispatch these itself as
+  // well, so a single click would have fired two thunks.
   const handleJoin = async (rideId) => {
-    setActionLoading(true);
+    setLoadingRideId(rideId);
     try {
       await dispatch(joinRide(rideId)).unwrap();
-      setDetailsModalOpen(false);
+      toast.success("You are on this ride.");
     } catch (err) {
-      alert(err.message || 'Failed to join ride.');
+      toast.error(err?.message || "Could not join that ride.");
     } finally {
-      setActionLoading(false);
+      setLoadingRideId(null);
     }
   };
 
-
-
   const handleUnjoin = async (rideId) => {
-    setActionLoading(true);
+    setLoadingRideId(rideId);
     try {
       await dispatch(unjoinRide(rideId)).unwrap();
-      setDetailsModalOpen(false);
+      toast.success("You have left the ride.");
     } catch (err) {
-      alert(err.message || 'Failed to cancel join.');
+      toast.error(err?.message || "Could not leave that ride.");
     } finally {
-      setActionLoading(false);
+      setLoadingRideId(null);
     }
   };
 
   const handleEdit = (ride) => {
     setEditingRide(ride);
     setIsFormOpen(true);
-    setDetailsModalOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    setActionLoading(true);
+  const handleDeleteConfirmed = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
     try {
-      await dispatch(deleteRide(id));
-      setDetailsModalOpen(false);
+      await dispatch(deleteRide(confirmDelete)).unwrap();
+      toast.success("Ride deleted.");
+      setConfirmDelete(null);
     } catch (err) {
-      alert(err.message || 'Failed to delete ride.');
+      toast.error(err?.message || "Could not delete that ride.");
     } finally {
-      setActionLoading(false);
+      setDeleting(false);
     }
   };
 
-  const handleDeleteConfirm = (ride) => {
-    setConfirmDelete(ride);
-  };
-
-  const handleDeleteCancel = () => {
-    setConfirmDelete(null);
-  };
-
   const clearAllFilters = () => {
-
     dispatch(setSearchTerm(""));
-    dispatch(
-      setFilters({
-        timeFrame: null,
-        dateRange: null,
-        minSeats: null,
-        maxPrice: null,
-        direction: null,
-        startDate: null,
-        endDate: null,
-      })
-    );
+    dispatch(setFilters(emptyFilters));
   };
 
-  const handleFilterChange = (filterType, value) => {
+  const handleFilterChange = (filterType, value) =>
     dispatch(setFilters({ [filterType]: value }));
-  };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-r from-teal-900 via-cyan-800 to-blue-900 text-gray-200 flex flex-col">
-        <div className="flex-grow flex items-center justify-center">
-          <div className="text-white text-2xl flex items-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="mr-3"
-            >
-              <Car className="w-8 h-8 text-purple-400" />
-            </motion.div>
-            Loading rides...
-          </div>
-        </div>
-      </div>
-    );
-  }
+  /* ---------------------------------------------------------------- render */
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-r from-teal-900 via-cyan-800 to-blue-900 text-gray-200 flex flex-col">
-        <div className="flex-grow flex items-center justify-center">
-          <div className="bg-red-900/50 backdrop-blur-md p-6 rounded-xl border border-red-500/50 max-w-lg mx-auto">
-            <div className="flex items-center text-red-400 text-xl mb-4">
-              <AlertTriangle className="w-6 h-6 mr-2" />
-              Error Loading Rides
-            </div>
-            <p className="text-white/80">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 bg-red-700 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
+  // The slice already computes filteredRides; the page used to render
+  // rides.slice(0, 5) and ignore it.
+  const visibleRides = filteredRides ?? rides;
+  const initialLoading = loading && !rides.length;
+  const hasFilters =
+    Boolean(searchTerm) ||
+    Object.entries(filters).some(
+      ([key, value]) => key !== "sortBy" && value !== null && value !== ""
     );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-teal-900 via-cyan-800 to-blue-900 text-gray-200 flex flex-col">
-      <div className="layout-container flex h-full grow flex-col">
-        <div className="px-40 flex flex-1 justify-center py-5">
-          <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-            <div className="flex flex-wrap justify-between gap-3 p-4">
-              <p className="text-white tracking-light text-[32px] font-bold leading-tight min-w-72">Ride Share</p>
-              <button
-                className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 bg-[#2b3640] text-white text-sm font-medium leading-normal"
-                onClick={() => setIsFormOpen(true)}
-              >
-                <span className="truncate">Offer Ride</span>
-              </button>
-            </div>
-            {/* Ride Cards - vertical stack of horizontal cards */}
-            {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <svg className="animate-spin h-10 w-10 text-[#9eadbd]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                <span className="ml-4 text-white text-lg font-medium">Loading rides...</span>
-              </div>
-            ) : error ? (
-              <div className="col-span-full text-center py-6 md:py-10 bg-red-900/20 rounded-lg border border-red-500/50">
-                <div className="flex flex-col items-center space-y-3">
-                  <svg className="text-red-400" width="36" height="36" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M12 9v4m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9Z"/></svg>
-                  <p className="text-red-300 text-base font-medium">Failed to load rides</p>
-                  <p className="text-red-400 text-sm">{error}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="mt-2 px-4 py-1.5 bg-yellow-500 text-black rounded-md text-sm font-medium hover:bg-yellow-400 transition-colors"
-                    disabled={loading}
-                  >
-                    Retry
-                  </button>
-                </div>
-              </div>
-            ) : (
-              rides.slice(0, 5).map((ride) => (
-                <div key={ride.id} className="p-4">
-                  <div className="flex items-stretch justify-between gap-4 rounded-xl">
-                    <div className="flex flex-[2_2_0px] flex-col gap-4">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-white text-base font-bold leading-tight">{ride.pickupLocation} to {ride.dropLocation}</p>
-                        <p className="text-[#9eadbd] text-sm font-normal leading-normal">Date: {formatDate(ride.departureDateTime)} Time: {formatTime(ride.departureDateTime)} Seats Available: {ride.availableSeats}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-4 flex-row-reverse bg-[#2b3640] text-white text-sm font-medium leading-normal w-fit"
-                          onClick={() => handleViewDetails(ride)}
-                        >
-                          <span className="truncate">View Details</span>
-                        </button>
-                        {ride.creatorId === user?.id && (
-                          <>
-                            <button
-                              className="flex min-w-[60px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-3 bg-blue-600 text-white text-sm font-medium leading-normal hover:bg-blue-500 transition"
-                              onClick={() => handleEdit(ride)}
-                            >
-                              <span className="truncate">Edit</span>
-                            </button>
-                            <button
-                              className="flex min-w-[60px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-3 bg-red-600 text-white text-sm font-medium leading-normal hover:bg-red-500 transition"
-                              onClick={() => handleDeleteConfirm(ride)}
-                              disabled={actionLoading}
-                            >
-                              <span className="truncate">{actionLoading ? 'Deleting...' : 'Delete'}</span>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div
-                      className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl flex-1"
-                      style={{ backgroundImage: `url('${ride.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80'}')` }}
-                    ></div>
-                  </div>
-                </div>
-              ))
-            )}
-            {/* Offer Ride Modal */}
-            <RideFormModal
-              isOpen={isFormOpen}
-              onCancel={() => {
-                setIsFormOpen(false);
-                setEditingRide(null);
-              }}
-              onSubmit={handleFormSubmit}
-              editingRide={editingRide}
-              isSubmitting={isSubmitting}
-            />
-            {/* Delete Confirmation Modal */}
-            <AnimatePresence>
-              {confirmDelete && (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  exit={{ opacity: 0 }} 
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                >
-                  <motion.div 
-                    initial={{ scale: 0.95, opacity: 0 }} 
-                    animate={{ scale: 1, opacity: 1 }} 
-                    exit={{ scale: 0.95, opacity: 0 }} 
-                    className="bg-[#2b3640] p-6 rounded-xl shadow-xl max-w-md w-full border border-white/10 flex flex-col gap-4 relative"
-                  >
-                    <h3 className="text-xl font-bold text-white text-center">Confirm Delete</h3>
-                    <p className="text-white/80 text-center">
-                      Are you sure you want to delete this ride? This action cannot be undone.
-                    </p>
-                    <div className="flex gap-3 justify-end mt-4">
-                      <button 
-                        className="px-4 py-2 text-sm rounded-lg bg-gray-600 text-white hover:bg-gray-500 transition"
-                        onClick={handleDeleteCancel}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
-                        onClick={() => {
-                          handleDelete(confirmDelete.id);
-                          setConfirmDelete(null);
-                        }}
-                        disabled={actionLoading}
-                      >
-                        {actionLoading ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+    <PageShell width="wide">
+      <SectionHeader
+        eyebrow="RideLoop"
+        tone="ride"
+        rule
+        title="Shared rides"
+        description="Heading to the station or the airport? Split the fare with someone going the same way."
+        size="h2"
+        action={
+          <Button
+            leadingIcon={Plus}
+            onClick={() => {
+              setEditingRide(null);
+              setIsFormOpen(true);
+            }}
+          >
+            Offer a ride
+          </Button>
+        }
+      />
 
-            {/* Ride Details Modal */}
-            <AnimatePresence>
-              {detailsModalOpen && selectedRide && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-[#2b3640] p-8 rounded-xl shadow-xl max-w-2xl w-full border border-white/10 flex flex-col gap-4 relative" onClick={e => e.stopPropagation()}>
-                    <button type="button" className="absolute top-4 right-4 text-white hover:text-[#9eadbd]" onClick={() => setDetailsModalOpen(false)}>&times;</button>
-                    <h2 className="text-xl md:text-2xl font-bold mb-2 text-white text-center">{selectedRide.pickupLocation} to {selectedRide.dropLocation}</h2>
-                    <div className="flex flex-col gap-2 text-white">
-                      <span>Date: {formatDate(selectedRide.departureDateTime)}</span>
-                      <span>Time: {formatTime(selectedRide.departureDateTime)}</span>
-                      <span>Seats Available: {selectedRide.availableSeats}</span>
-                      {selectedRide.estimatedCost && <span>Estimated Cost: {selectedRide.estimatedCost}</span>}
-                      {selectedRide.phoneNumber && <span>Contact: {selectedRide.phoneNumber}</span>}
-                      {selectedRide.description && <span>Description: {selectedRide.description}</span>}
-                    </div>
-                    <div className="flex gap-3 justify-end mt-4">
-                      {selectedRide.creatorId === user?.id ? (
-                        <>
-                          <button className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition" onClick={() => handleEdit(selectedRide)} disabled={actionLoading}>Edit</button>
-                          <button className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-500 transition" onClick={() => handleDelete(selectedRide.id)} disabled={actionLoading}>{actionLoading ? 'Deleting...' : 'Delete'}</button>
-                        </>
-                      ) : (
-                        selectedRide.participants && selectedRide.participants.some(p => p.participant?.id === user?.id) ? (
-                          <button className="px-4 py-2 text-sm rounded-lg bg-yellow-600 text-white hover:bg-yellow-500 transition" onClick={() => handleUnjoin(selectedRide.id)} disabled={actionLoading}>{actionLoading ? 'Cancelling...' : 'Cancel Join'}</button>
-                        ) : (
-                          <button className="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-500 transition" onClick={() => handleJoin(selectedRide.id)} disabled={actionLoading}>{actionLoading ? 'Joining...' : 'Join Ride'}</button>
-                        )
-                      )}
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+      {/* Search and filters, reconnected. The Redux state and every handler
+          already existed but were wired to no UI at all. */}
+      <div className="mt-10">
+        <RideFilters
+          searchTerm={searchTerm}
+          onSearchChange={(value) => dispatch(setSearchTerm(value))}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          clearAllFilters={clearAllFilters}
+        />
       </div>
-    </div>
+
+      <section className="mt-10">
+        <div className="flex items-baseline justify-between gap-4">
+          <Eyebrow>Available</Eyebrow>
+          <span className="numeric text-micro text-ink-4">
+            {visibleRides.length}
+            {hasFilters && rides.length ? ` of ${rides.length}` : ""}
+          </span>
+        </div>
+
+        <div className="mt-6">
+          {initialLoading ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          ) : visibleRides.length > 0 ? (
+            <RideGrid
+              rides={visibleRides}
+              currentUser={user}
+              onEdit={handleEdit}
+              onDelete={(id) => setConfirmDelete(id)}
+              onJoin={handleJoin}
+              onUnjoin={handleUnjoin}
+              loadingRideId={loadingRideId}
+            />
+          ) : hasFilters ? (
+            <EmptyState
+              icon={SearchX}
+              title="No rides match those filters"
+              description="Try a wider date range, or clear the filters to see everything."
+              action={
+                <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                  Clear filters
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={Car}
+              title="No rides posted yet"
+              description="Offer one and anyone heading the same way can split the fare with you."
+              action={
+                <Button size="sm" onClick={() => setIsFormOpen(true)}>
+                  Offer a ride
+                </Button>
+              }
+            />
+          )}
+        </div>
+      </section>
+
+      <RideFormModal
+        isOpen={isFormOpen}
+        editingRide={editingRide}
+        onSubmit={handleFormSubmit}
+        onCancel={() => {
+          setIsFormOpen(false);
+          setEditingRide(null);
+        }}
+        isSubmitting={isSubmitting}
+      />
+
+      <Modal
+        open={Boolean(confirmDelete)}
+        onClose={() => setConfirmDelete(null)}
+        size="sm"
+        title="Delete this ride?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDelete(null)}>
+              Keep it
+            </Button>
+            <Button
+              variant="danger"
+              loading={deleting}
+              onClick={handleDeleteConfirmed}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-ui text-ink-2">
+          Anyone who joined will be removed from it. This cannot be undone.
+        </p>
+      </Modal>
+    </PageShell>
   );
 };
 
