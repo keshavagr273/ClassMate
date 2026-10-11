@@ -43,7 +43,11 @@ const SubjectStatCard = ({
               <Spinner size="sm" />
             </span>
           ) : stats ? (
-            <ProgressRing value={stats.percentage} size={44} />
+            <ProgressRing
+              value={stats.percentage}
+              size={44}
+              empty={!stats.totalDays}
+            />
           ) : null}
         </div>
       </div>

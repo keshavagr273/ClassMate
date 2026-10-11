@@ -20,6 +20,7 @@ import performanceMiddleware from './src/middlewares/performance.middleware.js';
 import metrics from './src/utils/metrics.js';
 import authMiddleware from './src/middlewares/auth.middleware.js';
 import requireAdmin from './src/middlewares/requireAdmin.middleware.js';
+import apiLimiter from './src/middlewares/rateLimit.middleware.js';
 
 
 dotenv.config({ path: "./.env" });
@@ -59,6 +60,10 @@ app.use('/api', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
+
+// Blanket rate limit across the API. Per-route limiters (auth, scraping) are
+// tighter and are applied in their own routers.
+app.use('/api', apiLimiter);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -118,13 +123,31 @@ const startServer = async () => {
     console.log("Associations initialized!");
     
     console.log("Connecting to database...");
-    // Only run alter:true in development — in production, use proper migrations
-    if (process.env.NODE_ENV !== "production") {
-      await sequelize.sync({ alter: true });
-      console.log("Database & tables have been updated (dev sync)!");
+
+    /* Schema sync is now opt-in via DB_SYNC=alter (or DB_SYNC=force).
+     *
+     * This previously ran `sync({ alter: true })` on every boot whenever
+     * NODE_ENV !== "production". That is not idempotent: each run diffs the
+     * models against the live schema and emits ALTER statements, and it
+     * eventually tried to DROP CONSTRAINT "BuyAndSells_userId_fkey" after an
+     * earlier run had already removed it. Postgres rejected the statement,
+     * startServer threw, and the process exited — the app could no longer
+     * boot at all against its own database.
+     *
+     * It is also pointed at a hosted database, so every local `npm run dev`
+     * was mutating the real schema. Default to verifying the connection only;
+     * opt in deliberately when models actually change.
+     */
+    const syncMode = (process.env.DB_SYNC || "").toLowerCase();
+    if (syncMode === "alter" || syncMode === "force") {
+      console.warn(
+        `DB_SYNC=${syncMode} — altering the live schema to match the models.`
+      );
+      await sequelize.sync({ [syncMode]: true });
+      console.log("Database schema synced.");
     } else {
       await sequelize.authenticate();
-      console.log("Database connection authenticated!");
+      console.log("Database connection authenticated.");
     }
     await connectDb();
     console.log("Database connected successfully");

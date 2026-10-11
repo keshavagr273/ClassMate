@@ -30,6 +30,35 @@ const isValidDate = (dateString) => {
   return date.toISOString().startsWith(dateString);
 };
 
+/**
+ * Resolves the user whose data is being requested.
+ *
+ * These endpoints used to read `userId` straight out of the query string, so
+ * any authenticated user could read (and, via PUT, modify) anyone else's
+ * attendance just by changing the parameter. The authenticated id is now the
+ * only source of truth; a query userId is accepted only when it matches, so
+ * existing callers that pass their own id keep working.
+ *
+ * @returns {{ userId: number } | { error: { status: number, message: string } }}
+ */
+const resolveUserId = (req) => {
+  const authId = req.user?.id;
+  if (authId == null) {
+    return { error: { status: 401, message: "Not authenticated." } };
+  }
+
+  const requested = req.query.userId;
+  if (requested != null && String(requested) !== String(authId)) {
+    return {
+      error: {
+        status: 403,
+        message: "You can only access your own attendance.",
+      },
+    };
+  }
+  return { userId: authId };
+};
+
 export const markAttendance = async (req, res) => {
   // userId is always taken from the authenticated token — never from the request body.
   const numUserId = req.user?.id;
@@ -51,6 +80,15 @@ export const markAttendance = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "Invalid date format. Use YYYY-MM-DD.",
+    });
+  }
+  // The UI caps its date picker at today, but the API did not — so attendance
+  // could be marked for arbitrary future dates, which then counted towards the
+  // percentage. Enforce it server-side where it actually matters.
+  if (date > new Date().toISOString().slice(0, 10)) {
+    return res.status(400).json({
+      success: false,
+      message: "Cannot mark attendance for a future date.",
     });
   }
   const numSubjectId = parseInt(subjectId, 10);
@@ -137,6 +175,15 @@ export const updateAttendance = async (req, res) => {
         .json({ success: false, message: "Attendance record not found." });
     }
 
+    // Ownership check. Without this, any authenticated user could flip any
+    // other user's attendance by guessing a record id.
+    if (record.userId !== req.user?.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only edit your own attendance.",
+      });
+    }
+
     if (record.status !== status) {
       record.status = status;
       record.markedAt = new Date();
@@ -169,18 +216,15 @@ export const updateAttendance = async (req, res) => {
 };
 
 export const getAttendanceRecords = async (req, res) => {
-  const { userId, subjectId, date, startDate, endDate } = req.query;
+  const { subjectId, date, startDate, endDate } = req.query;
 
-  if (!userId) {
+  const resolved = resolveUserId(req);
+  if (resolved.error) {
     return res
-      .status(400)
-      .json({ success: false, message: "userId query parameter is required." });
+      .status(resolved.error.status)
+      .json({ success: false, message: resolved.error.message });
   }
-
-  const numUserId = parseInt(userId, 10);
-  if (isNaN(numUserId)) {
-    return res.status(400).json({ success: false, message: "Invalid userId." });
-  }
+  const numUserId = resolved.userId;
 
   try {
     const whereClause = { userId: numUserId };
@@ -226,20 +270,27 @@ export const getAttendanceRecords = async (req, res) => {
 };
 
 export const getAttendancePercentage = async (req, res) => {
-  const { userId, subjectId } = req.query;
+  const { subjectId } = req.query;
 
-  if (!userId || !subjectId) {
+  const resolved = resolveUserId(req);
+  if (resolved.error) {
+    return res
+      .status(resolved.error.status)
+      .json({ success: false, message: resolved.error.message });
+  }
+  const numUserId = resolved.userId;
+
+  if (!subjectId) {
     return res.status(400).json({
       success: false,
-      message: "userId and subjectId query parameters are required.",
+      message: "subjectId query parameter is required.",
     });
   }
-  const numUserId = parseInt(userId, 10);
   const numSubjectId = parseInt(subjectId, 10);
-  if (isNaN(numUserId) || isNaN(numSubjectId)) {
+  if (isNaN(numSubjectId)) {
     return res
       .status(400)
-      .json({ success: false, message: "Invalid userId or subjectId." });
+      .json({ success: false, message: "Invalid subjectId." });
   }
 
   try {
@@ -302,17 +353,13 @@ export const getAttendancePercentage = async (req, res) => {
 };
 
 export const getOverallAttendancePercentage = async (req, res) => {
-  const { userId } = req.query;
-
-  if (!userId) {
+  const resolved = resolveUserId(req);
+  if (resolved.error) {
     return res
-      .status(400)
-      .json({ success: false, message: "userId query parameter is required." });
+      .status(resolved.error.status)
+      .json({ success: false, message: resolved.error.message });
   }
-  const numUserId = parseInt(userId, 10);
-  if (isNaN(numUserId)) {
-    return res.status(400).json({ success: false, message: "Invalid userId." });
-  }
+  const numUserId = resolved.userId;
 
   try {
     const currentUserEnrollments = await UserSubject.findAll({
@@ -383,17 +430,13 @@ export const getOverallAttendancePercentage = async (req, res) => {
 };
 
 export const getSubjectWisePercentages = async (req, res) => {
-  const { userId } = req.query;
-
-  if (!userId) {
+  const resolved = resolveUserId(req);
+  if (resolved.error) {
     return res
-      .status(400)
-      .json({ success: false, message: "userId query parameter is required." });
+      .status(resolved.error.status)
+      .json({ success: false, message: resolved.error.message });
   }
-  const numUserId = parseInt(userId, 10);
-  if (isNaN(numUserId)) {
-    return res.status(400).json({ success: false, message: "Invalid userId." });
-  }
+  const numUserId = resolved.userId;
 
   try {
     const userWithSubjects = await User.findByPk(numUserId, {

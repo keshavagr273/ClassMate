@@ -54,6 +54,13 @@ export const getNotification = asyncHandler(async (req, res) => {
 });
 
 export const createNotification = asyncHandler(async (req, res) => {
+  // This endpoint takes an arbitrary target userId, so it has to be admin
+  // only. broadcastNotification was already gated; this one was not, which
+  // let any signed-in student push a notification to any other account.
+  if (!req.user?.isAdmin) {
+    throw new ApiError("Admin access required", 403);
+  }
+
   const { userId, message, type, entityType, entityId, actionUrl, metadata } =
     req.body;
   if (!userId || !message) {

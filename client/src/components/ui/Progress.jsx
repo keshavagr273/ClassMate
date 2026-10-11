@@ -12,6 +12,7 @@ export const toneForPercentage = (value) => {
 };
 
 const strokes = {
+  empty: "text-line-3",
   positive: "text-positive",
   caution: "text-caution",
   critical: "text-clay-soft",
@@ -20,6 +21,7 @@ const strokes = {
 };
 
 const fills = {
+  empty: "bg-line-3",
   positive: "bg-positive",
   caution: "bg-caution",
   critical: "bg-clay",
@@ -40,6 +42,8 @@ export const ProgressRing = ({
   tone,
   showLabel = true,
   label,
+  /** No records at all is not the same as 0% attendance — render it neutral. */
+  empty = false,
   className,
 }) => {
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
@@ -47,7 +51,7 @@ export const ProgressRing = ({
   const radius = (size - width) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (pct / 100) * circumference;
-  const resolved = tone || toneForPercentage(pct);
+  const resolved = empty ? "empty" : tone || toneForPercentage(pct);
 
   return (
     <div
@@ -81,7 +85,10 @@ export const ProgressRing = ({
       </svg>
       {showLabel && (
         <span
-          className="numeric absolute font-display font-bold text-ink"
+          className={cn(
+            "numeric absolute font-display font-bold",
+            empty ? "text-ink-4" : "text-ink"
+          )}
           style={{ fontSize: Math.max(10, Math.round(size * 0.26)) }}
         >
           {Math.round(pct)}

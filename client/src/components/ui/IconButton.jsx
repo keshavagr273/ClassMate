@@ -42,7 +42,8 @@ const IconButton = React.forwardRef(function IconButton(
       title={label}
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full",
-        "transition-colors duration-150 ease-standard active:scale-95",
+        "cursor-pointer transition-all duration-150 ease-standard",
+        "hover:scale-105 active:scale-95 disabled:transform-none",
         "disabled:cursor-not-allowed disabled:opacity-45",
         variants[variant] || variants.ghost,
         sizes[size] || sizes.md,

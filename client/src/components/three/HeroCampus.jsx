@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { createLattice } from "./lattice";
+import { createCampus } from "./campus";
 
 /**
  * React mount point for the hero scene. This module is only ever reached
@@ -10,7 +10,7 @@ import { createLattice } from "./lattice";
  * WebGL context will burn through the browser's context budget at twice the
  * rate, so if the scene survives repeated hot reloads the cleanup is correct.
  */
-const HeroLattice = ({ reducedMotion = false }) => {
+const HeroCampus = ({ reducedMotion = false }) => {
   const hostRef = useRef(null);
   const [failed, setFailed] = useState(false);
 
@@ -20,7 +20,7 @@ const HeroLattice = ({ reducedMotion = false }) => {
 
     let teardown;
     try {
-      teardown = createLattice(host, { reducedMotion });
+      teardown = createCampus(host, { reducedMotion });
     } catch (error) {
       // No WebGL, a blocked context, or a driver failure. The caller renders
       // the CSS fallback instead.
@@ -53,4 +53,4 @@ const HeroLattice = ({ reducedMotion = false }) => {
   );
 };
 
-export default HeroLattice;
+export default HeroCampus;

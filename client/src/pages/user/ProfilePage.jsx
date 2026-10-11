@@ -53,12 +53,15 @@ const hostelOptions = [
   "Tdi flats",
 ];
 
+/** Mirrors GRADUATION_YEAR in the server's user controller. */
+const GRADUATION_YEAR = 2027;
+
 const emptyProfile = {
   name: "",
   email: "",
   branch: "",
   semester: "",
-  graduation_year: 2025,
+  graduation_year: GRADUATION_YEAR,
   hostel: "",
 };
 
@@ -67,7 +70,7 @@ const fromUser = (user) => ({
   email: user.email || "",
   branch: user.branch || "",
   semester: user.semester || "",
-  graduation_year: user.graduation_year || 2025,
+  graduation_year: user.graduation_year || GRADUATION_YEAR,
   hostel: user.hostel || "",
 });
 

@@ -28,6 +28,9 @@ const featureModules = [
   {
     icon: BookOpenCheck,
     title: "SkillSwap",
+    featured: true,
+    stat: "Peer matched",
+    points: ["Teach a skill", "Learn a skill", "Direct requests"],
     accent: "skill",
     description:
       "Teach what you know, learn what you want. Get matched with peers by skill.",
@@ -36,6 +39,8 @@ const featureModules = [
   {
     icon: Briefcase,
     title: "JobConnect",
+    stat: "Live boards",
+    points: ["Filter by stipend", "Remote only"],
     accent: "jobs",
     // The route is /job-connect. This card used to point at /intern-connect,
     // which has never existed, so the link was dead.
@@ -46,6 +51,8 @@ const featureModules = [
   {
     icon: CalendarDays,
     title: "ClassPulse",
+    stat: "75% line",
+    points: ["Per subject", "Day by day"],
     accent: "pulse",
     description:
       "Track attendance per subject and see where you stand against the 75% line.",
@@ -54,6 +61,9 @@ const featureModules = [
   {
     icon: ShoppingBag,
     title: "CampusBazaar",
+    featured: true,
+    stat: "On campus",
+    points: ["Photos", "Direct contact"],
     accent: "bazaar",
     description:
       "Buy and sell within campus. Books, cycles, electronics, from people you can find.",
@@ -62,6 +72,8 @@ const featureModules = [
   {
     icon: SearchCheck,
     title: "FoundIt!",
+    stat: "Most found in 24h",
+    points: ["Photo reports", "By location"],
     accent: "found",
     description:
       "Report something lost, or post what you found. Most things turn up within a day.",
@@ -70,6 +82,9 @@ const featureModules = [
   {
     icon: Share2,
     title: "RideLoop",
+    featured: true,
+    stat: "Split the fare",
+    points: ["Seats and cost", "Join or offer"],
     accent: "ride",
     description:
       "Share a cab to the station or the airport. Split the fare, cut the wait.",
@@ -116,7 +131,11 @@ const spotlightData = [
     link: "/spotlight/aryan",
   },
   {
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+    // Sized via Unsplash's own params. The bare URL serves a 7360x4912
+    // original — ~36 megapixels, ~138MB once decoded — which blocked the
+    // main thread for roughly a second as this section scrolled in.
+    image:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=900&q=70&auto=format&fit=crop",
     title: "Sanya's research paper",
     subtitle: "Published in IEEE Xplore",
     description:
@@ -153,11 +172,31 @@ const HomePage = () => {
             description="Each one solves a problem students were already solving over WhatsApp."
             size="h2"
           />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Bento rather than a uniform 3x2: the first tool takes a double
+              span, so the grid has a focal point instead of reading as six
+              identical tiles. */}
+          <div className="mt-10 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featureModules.map((feature, index) => (
               <FeatureCard key={feature.title} {...feature} index={index} />
             ))}
           </div>
+
+          {/* A framed band of numbers to close the section. */}
+          <dl className="mt-4 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["6", "Tools, one account"],
+              ["0", "Rupees, ever"],
+              ["24/7", "No office hours"],
+              ["1", "Student maintaining it"],
+            ].map(([value, label]) => (
+              <div key={label} className="bg-surface px-6 py-5">
+                <dd className="numeric font-display text-h3 font-bold text-ink">
+                  {value}
+                </dd>
+                <dt className="mt-1 text-meta text-ink-4">{label}</dt>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* How it works */}
@@ -228,6 +267,9 @@ const HomePage = () => {
                     src={event.image}
                     alt=""
                     loading="lazy"
+                    decoding="async"
+                    width={720}
+                    height={540}
                     className="size-full object-cover transition-transform duration-500 ease-standard group-hover:scale-[1.03]"
                   />
                 </div>
@@ -262,12 +304,12 @@ const HomePage = () => {
             <div className="lg:col-span-7">
               <Eyebrow>Built on campus</Eyebrow>
               <h2 className="mt-4 text-h2 text-ink">
-                Made by students who were tired of WhatsApp groups.
+                Built by one student, tired of WhatsApp groups.
               </h2>
               <p className="mt-4 max-w-xl text-body text-ink-3">
-                ClassMate is maintained by students at IIIT Sonepat. If
-                something is broken or missing, it is usually because nobody has
-                asked for it yet — so ask.
+                ClassMate is a solo project, built and maintained by a student at
+                IIIT Sonepat. If something is broken or missing, it is usually
+                because nobody has asked for it yet — so ask.
               </p>
             </div>
 

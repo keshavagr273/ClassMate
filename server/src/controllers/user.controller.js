@@ -14,6 +14,18 @@ const getCurrentUTCDateTime = () => {
   return now.toISOString().slice(0, 19).replace("T", " ");
 };
 
+/**
+ * Every account graduates in this year.
+ *
+ * Deriving it from the roll number was abandoned deliberately: the formats in
+ * use are inconsistent (some rolls carry the admission year leading, some
+ * trailing, some not at all), so the derivation produced values like 1235 and
+ * 9880. A single constant is predictable and correct for the current cohort.
+ * Change this one value when the cohort rolls over.
+ */
+export const GRADUATION_YEAR = 2027;
+
+/** Pulls the roll number out of an institute email. */
 const extractRegistrationDetails = (email) => {
   const match = email.match(/\d{8}/);
   if (!match) {
@@ -22,13 +34,33 @@ const extractRegistrationDetails = (email) => {
       400
     );
   }
-  const registrationNumber = match[0];
-  const graduationYear = parseInt(registrationNumber.substring(0, 4)) + 4;
-  return { registrationNumber, graduationYear };
+
+  return {
+    registrationNumber: match[0],
+    graduationYear: GRADUATION_YEAR,
+  };
 };
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export const registerUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
+
+  // There was no password validation at all: an absent password reached
+  // bcrypt.hash(undefined) and surfaced as a 500, and an empty one was
+  // accepted and hashed.
+  if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) {
+    return next(
+      new ApiError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+        400
+      )
+    );
+  }
+  if (password.length > 128) {
+    return next(new ApiError("Password must be under 128 characters.", 400));
+  }
+
   const existingUser = await User.findOne({ where: { email } });
   if (existingUser) {
     if (typeof next === "function") {
@@ -89,6 +121,12 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
 export const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
+
+  // Without this, a missing password reached bcrypt.compare(undefined, hash),
+  // which rejects and surfaced to the client as a 500 instead of a 400.
+  if (typeof password !== "string" || password.length === 0) {
+    return next(new ApiError("Password is required.", 400));
+  }
 
   const user = await User.findOne({ where: { email } });
   if (!user) return next(new ApiError("Email or password is wrong, re-enter.", 400));

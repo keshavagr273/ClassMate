@@ -2,10 +2,19 @@ import React, { Suspense, lazy, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ArrowDown } from "lucide-react";
-import { Button, Eyebrow } from "./ui";
+import { Button, Eyebrow, cn } from "./ui";
 
 /** The only entry point to three.js in the app. Keeps it out of the main chunk. */
-const HeroLattice = lazy(() => import("./three/HeroLattice"));
+const HeroCampus = lazy(() => import("./three/HeroCampus"));
+
+const tools = [
+  { label: "SkillSwap", to: "/skill-exchange", dot: "bg-skill" },
+  { label: "ClassPulse", to: "/attendance", dot: "bg-pulse" },
+  { label: "CampusBazaar", to: "/marketplace", dot: "bg-bazaar" },
+  { label: "FoundIt!", to: "/lost-found", dot: "bg-found" },
+  { label: "RideLoop", to: "/rides", dot: "bg-ride" },
+  { label: "JobConnect", to: "/job-connect", dot: "bg-jobs" },
+];
 
 const stats = [
   { value: "6", label: "Tools" },
@@ -14,7 +23,7 @@ const stats = [
 ];
 
 /** CSS-only stand-in: used while the scene loads, and permanently if WebGL fails. */
-const LatticeFallback = () => (
+const SceneFallback = () => (
   <div
     aria-hidden
     className="absolute inset-0 hairline-grid opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_85%)]"
@@ -53,8 +62,8 @@ const HeroSection = ({ onExploreClick }) => {
       {/* The scene sits behind the type, bleeding to the right. */}
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] lg:block">
         {bigScreen && (
-          <Suspense fallback={<LatticeFallback />}>
-            <HeroLattice reducedMotion={reducedMotion} />
+          <Suspense fallback={<SceneFallback />}>
+            <HeroCampus reducedMotion={reducedMotion} />
           </Suspense>
         )}
       </div>
@@ -74,8 +83,33 @@ const HeroSection = ({ onExploreClick }) => {
             internships &mdash; in one place, behind one login.
           </p>
 
+          {/* The six tools, inline. Puts the product's colour and its actual
+              surface area in front of the reader immediately, instead of
+              leaving the left column as type over empty space. */}
+          <ul className="mt-8 flex max-w-lg flex-wrap gap-1.5">
+            {tools.map((tool) => (
+              <li key={tool.label}>
+                <Link
+                  to={tool.to}
+                  className={cn(
+                    "group flex items-center gap-1.5 rounded-full border border-line bg-surface/70 py-1 pl-2 pr-3",
+                    "text-micro text-ink-2 backdrop-blur-sm",
+                    "transition-all duration-150 ease-standard",
+                    "hover:-translate-y-px hover:border-line-3 hover:text-ink"
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className={cn("size-1.5 shrink-0 rounded-full", tool.dot)}
+                  />
+                  {tool.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
           <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <Button onClick={onExploreClick} trailingIcon={ArrowDown}>
+            <Button size="lg" onClick={onExploreClick} trailingIcon={ArrowDown}>
               Explore tools
             </Button>
             {!isAuthenticated && (
@@ -85,7 +119,7 @@ const HeroSection = ({ onExploreClick }) => {
             )}
           </div>
 
-          <dl className="mt-16 flex items-end gap-10 border-t border-line pt-6">
+          <dl className="mt-14 flex items-end gap-10 border-t border-line pt-6">
             {stats.map((stat) => (
               <div key={stat.label}>
                 <dd className="numeric font-display text-h3 font-bold text-ink">

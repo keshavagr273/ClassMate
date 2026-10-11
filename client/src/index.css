@@ -234,6 +234,30 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Tailwind v3's preflight set `cursor: pointer` on buttons; v4 dropped it,
+     so every button in the app was showing the default arrow and nothing felt
+     clickable. Put it back for anything interactive. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="switch"]:not(:disabled),
+  summary,
+  label[for],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  input[type="range"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"],
+  select:disabled,
+  input:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
+
   ::selection {
     background-color: var(--color-accent);
     color: var(--color-canvas);
@@ -292,11 +316,18 @@
   inset: 0;
   z-index: 60;
   pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
+  /* No mix-blend-mode. A full-viewport fixed layer with a blend mode forces
+     the compositor to re-blend the entire screen on every scroll frame, which
+     showed up as sustained ~70ms long tasks. Against a near-black canvas,
+     plain low opacity is visually almost identical and essentially free. */
+  opacity: 0.028;
   background-image: url("/noise.png");
   background-repeat: repeat;
   background-size: 128px 128px;
+  /* Promote to its own layer and tell the browser nothing inside affects
+     layout, so it is painted once and reused. */
+  will-change: transform;
+  contain: strict;
 }
 
 /* A 1px hairline grid. Also the no-WebGL fallback behind the hero. */

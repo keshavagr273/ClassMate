@@ -48,59 +48,69 @@ const Modal = ({
         />
 
         <div className="fixed inset-0 flex items-end justify-center overflow-y-auto sm:items-center sm:p-4">
+          {/* DialogPanel stays a plain element and the motion wrapper sits
+              inside it. Passing `as={motion.div}` to DialogPanel makes Headless
+              UI v2 reach for its own transition machinery, which throws
+              "A <Transition.Child /> is used but it is missing a parent
+              <Transition />" under `static` and leaves the modal unopenable. */}
           <DialogPanel
-            as={motion.div}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2, ease }}
             className={cn(
-              "relative flex max-h-[92vh] w-full flex-col",
-              "border border-line bg-surface shadow-overlay",
-              "rounded-t-tile sm:rounded-card",
-              sizes[size] || sizes.md,
-              panelClassName
+              "flex w-full justify-center",
+              sizes[size] || sizes.md
             )}
           >
-            {/* Drag affordance for the mobile sheet. */}
-            <div
-              className="mx-auto mt-2.5 h-1 w-9 shrink-0 rounded-full bg-line-3 sm:hidden"
-              aria-hidden
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2, ease }}
+              className={cn(
+                "relative flex max-h-[92vh] w-full flex-col",
+                "border border-line bg-surface shadow-overlay",
+                "rounded-t-tile sm:rounded-card",
+                panelClassName
+              )}
+            >
+              {/* Drag affordance for the mobile sheet. */}
+              <div
+                className="mx-auto mt-2.5 h-1 w-9 shrink-0 rounded-full bg-line-3 sm:hidden"
+                aria-hidden
+              />
 
-            {(title || showClose) && (
-              <header className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6">
-                <div className="min-w-0">
-                  {title && (
-                    <DialogTitle className="text-h4 text-ink">
-                      {title}
-                    </DialogTitle>
+              {(title || showClose) && (
+                <header className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6">
+                  <div className="min-w-0">
+                    {title && (
+                      <DialogTitle className="text-h4 text-ink">
+                        {title}
+                      </DialogTitle>
+                    )}
+                    {description && (
+                      <p className="mt-1 text-meta text-ink-3">{description}</p>
+                    )}
+                  </div>
+                  {showClose && (
+                    <IconButton
+                      icon={X}
+                      label="Close"
+                      size="sm"
+                      onClick={onClose}
+                      className="-mt-0.5 -mr-1.5"
+                    />
                   )}
-                  {description && (
-                    <p className="mt-1 text-meta text-ink-3">{description}</p>
-                  )}
-                </div>
-                {showClose && (
-                  <IconButton
-                    icon={X}
-                    label="Close"
-                    size="sm"
-                    onClick={onClose}
-                    className="-mt-0.5 -mr-1.5"
-                  />
+                </header>
+              )}
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                {children}
+              </div>
+
+                {footer && (
+                  <footer className="flex shrink-0 flex-col-reverse gap-2.5 border-t border-line px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+                    {footer}
+                  </footer>
                 )}
-              </header>
-            )}
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-              {children}
-            </div>
-
-            {footer && (
-              <footer className="flex shrink-0 flex-col-reverse gap-2.5 border-t border-line px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
-                {footer}
-              </footer>
-            )}
+            </motion.div>
           </DialogPanel>
         </div>
       </Dialog>

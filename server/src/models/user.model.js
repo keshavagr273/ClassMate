@@ -64,6 +64,9 @@ const users = sequelize.define(
     graduation_year: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      // Fixed for the current cohort rather than derived from the roll
+      // number; see GRADUATION_YEAR in controllers/user.controller.js.
+      defaultValue: 2027,
     },
     isAdmin: {
       type: DataTypes.BOOLEAN,

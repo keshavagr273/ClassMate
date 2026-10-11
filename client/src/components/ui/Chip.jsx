@@ -17,7 +17,8 @@ const Chip = React.forwardRef(function Chip(
       className={cn(
         "inline-flex h-8 shrink-0 items-center gap-2 rounded-chip border px-3.5",
         "text-meta font-medium whitespace-nowrap",
-        "transition-colors duration-150 ease-standard",
+        "cursor-pointer transition-all duration-150 ease-standard",
+        "hover:-translate-y-px active:translate-y-0",
         active
           ? "border-accent/30 bg-accent-faint text-accent-dim"
           : "border-line bg-surface-2 text-ink-2 hover:border-line-2 hover:text-ink",

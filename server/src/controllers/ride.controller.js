@@ -7,6 +7,9 @@ import { Op } from "sequelize";
 import RideParticipant from "../models/rideParticipant.model.js";
 import sequelize from "../db/db.js";
 
+/** The UI caps seats at 8; the API never did. */
+const MAX_SEATS = 8;
+
 
 export const createRide = asyncHandler(async (req, res) => {
   const {
@@ -33,8 +36,18 @@ export const createRide = asyncHandler(async (req, res) => {
     throw new ApiError("Invalid departure date and time format", 400);
   }
 
-  if (!totalSeats || totalSeats < 1) {
-    throw new ApiError("Total seats must be at least 1", 400);
+  const seats = Number(totalSeats);
+  if (!Number.isInteger(seats) || seats < 1 || seats > MAX_SEATS) {
+    throw new ApiError(
+      `Total seats must be a whole number between 1 and ${MAX_SEATS}`,
+      400
+    );
+  }
+
+  // The form blocks past departures, but the API accepted them, which put
+  // already-departed rides into the open list.
+  if (parsedDeparture.getTime() < Date.now() - 60 * 1000) {
+    throw new ApiError("Departure time cannot be in the past", 400);
   }
 
   if (estimatedCost && estimatedCost < 0) {
@@ -72,8 +85,8 @@ export const createRide = asyncHandler(async (req, res) => {
       pickupLocation: pickupLocation.trim(),
       dropLocation: dropLocation.trim(),
       departureDateTime: parsedDeparture,
-      totalSeats,
-      availableSeats: totalSeats,
+      totalSeats: seats,
+      availableSeats: seats,
       estimatedCost,
       description,
       phoneNumber,
@@ -120,12 +133,26 @@ export const updateRide = asyncHandler(async (req, res) => {
     );
   }
 
-  // Ensure we don't reduce seats below what's already taken
-  if (totalSeats && totalSeats < ride.totalSeats - ride.availableSeats) {
-    throw new ApiError(
-      "Cannot reduce total seats below number of seats already taken",
-      400
-    );
+  // `totalSeats` was previously tested for truthiness, so a value of 0 slipped
+  // past this guard and then set totalSeats to 0 while leaving availableSeats
+  // untouched. Treat "was it supplied" and "is it valid" as separate questions.
+  const seatsSupplied = totalSeats !== undefined && totalSeats !== null;
+  const seatsTaken = ride.totalSeats - ride.availableSeats;
+
+  if (seatsSupplied) {
+    const n = Number(totalSeats);
+    if (!Number.isInteger(n) || n < 1 || n > MAX_SEATS) {
+      throw new ApiError(
+        `Total seats must be a whole number between 1 and ${MAX_SEATS}`,
+        400
+      );
+    }
+    if (n < seatsTaken) {
+      throw new ApiError(
+        "Cannot reduce total seats below number of seats already taken",
+        400
+      );
+    }
   }
 
   const parsedDeparture = departureDateTime ? new Date(departureDateTime) : undefined;
@@ -133,19 +160,31 @@ export const updateRide = asyncHandler(async (req, res) => {
     throw new ApiError("Invalid departure date and time format", 400);
   }
 
+  const nextTotalSeats = seatsSupplied ? Number(totalSeats) : ride.totalSeats;
+  const nextAvailableSeats = nextTotalSeats - seatsTaken;
+
   Object.assign(ride, {
     pickupLocation: pickupLocation ? pickupLocation.trim() : ride.pickupLocation,
     dropLocation: dropLocation ? dropLocation.trim() : ride.dropLocation,
     departureDateTime: parsedDeparture ?? ride.departureDateTime,
-    totalSeats: totalSeats ?? ride.totalSeats,
+    totalSeats: nextTotalSeats,
     estimatedCost: estimatedCost ?? ride.estimatedCost,
     description: description ?? ride.description,
     phoneNumber: phoneNumber ?? ride.phoneNumber,
     status: status ?? ride.status,
-    availableSeats: totalSeats
-      ? totalSeats - (ride.totalSeats - ride.availableSeats)
-      : ride.availableSeats,
+    availableSeats: nextAvailableSeats,
   });
+
+  /* Keep status consistent with seat count. Previously, adding seats to a FULL
+     ride left status at "FULL" while availableSeats went positive — and
+     joinRide rejects anything that is not "OPEN", so the ride became
+     permanently unjoinable. Only auto-adjust between OPEN and FULL; CANCELLED
+     and COMPLETED are deliberate states and must not be overwritten. */
+  if (ride.status === "OPEN" && ride.availableSeats <= 0) {
+    ride.status = "FULL";
+  } else if (ride.status === "FULL" && ride.availableSeats > 0) {
+    ride.status = "OPEN";
+  }
 
   await ride.save();
   return res
@@ -267,10 +306,15 @@ export const getAllRides = asyncHandler(async (req, res) => {
 });
 
 export const getUserRides = asyncHandler(async (req, res) => {
-  const userId = req.params.userId || req.user?.id;
-
+  // `req.params.userId || req.user.id` let any authenticated user read another
+  // user's records — including the joined participant/seller contact details.
+  // The authenticated id wins; a supplied id is honoured only when it matches.
+  const userId = req.user?.id;
   if (!userId) {
-    throw new ApiError("User ID is required", 400);
+    throw new ApiError("Authentication required", 401);
+  }
+  if (req.params.userId && String(req.params.userId) !== String(userId)) {
+    throw new ApiError("You can only view your own rides", 403);
   }
 
   try {
@@ -315,7 +359,7 @@ export const joinRide = asyncHandler(async (req, res) => {
     throw new ApiError("Authentication required", 401);
   }
 
-  const result = await sequelize.transaction(async (t) => {
+  await sequelize.transaction(async (t) => {
     // Lock the ride row for the duration of this transaction to prevent race conditions
     const ride = await Rides.findByPk(id, { lock: t.LOCK.UPDATE, transaction: t });
     if (!ride) throw new ApiError("Ride not found", 404);
@@ -368,7 +412,7 @@ export const unjoinRide = asyncHandler(async (req, res) => {
     throw new ApiError("Authentication required", 401);
   }
 
-  const result = await sequelize.transaction(async (t) => {
+  await sequelize.transaction(async (t) => {
     // Lock the ride row to prevent concurrent modification
     const ride = await Rides.findByPk(id, { lock: t.LOCK.UPDATE, transaction: t });
     if (!ride) throw new ApiError("Ride not found", 404);
@@ -380,7 +424,9 @@ export const unjoinRide = asyncHandler(async (req, res) => {
     if (!existingEntry) throw new ApiError("You have not joined this ride", 400);
 
     await existingEntry.destroy({ transaction: t });
-    ride.availableSeats += 1;
+    // Clamped: without the ceiling, data drift could push availableSeats
+    // above totalSeats and advertise seats that do not exist.
+    ride.availableSeats = Math.min(ride.availableSeats + 1, ride.totalSeats);
     if (ride.status === "FULL") ride.status = "OPEN";
     await ride.save({ transaction: t });
     return ride;

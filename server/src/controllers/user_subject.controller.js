@@ -21,8 +21,42 @@ const handleError = (res, error, message = "An unexpected error occurred", statu
   });
 };
 
+/**
+ * Resolves the user being acted on.
+ *
+ * These handlers took `userId` from the request body / URL params with no
+ * ownership check, so any authenticated user could enroll another user in
+ * subjects, read their enrolments, or — worst — unenroll them, which also
+ * permanently deletes that subject's attendance records. The authenticated id
+ * is now authoritative; a supplied id is accepted only when it matches, so
+ * existing callers that send their own id keep working.
+ */
+const resolveActingUser = (req, supplied) => {
+  const authId = req.user?.id;
+  if (authId == null) {
+    return { error: { status: 401, message: "Not authenticated." } };
+  }
+  if (supplied != null && String(supplied) !== String(authId)) {
+    return {
+      error: {
+        status: 403,
+        message: "You can only manage your own enrolments.",
+      },
+    };
+  }
+  return { userId: authId };
+};
+
 export const enrollUserInSubject = async (req, res) => {
-  const { userId, subjectId, subjectIds } = req.body;
+  const { subjectId, subjectIds } = req.body;
+
+  const acting = resolveActingUser(req, req.body.userId);
+  if (acting.error) {
+    return res
+      .status(acting.error.status)
+      .json({ success: false, message: acting.error.message });
+  }
+  const userId = acting.userId;
   const targetSubjectIds = subjectId ? [subjectId] : subjectIds;
 
   if (
@@ -94,22 +128,28 @@ export const enrollUserInSubject = async (req, res) => {
 };
 
 export const unenrollUserFromSubject = async (req, res) => {
-  const { userId, subjectId } = req.body;
+  const { subjectId } = req.body;
 
-  if (userId == null || subjectId == null) {
+  const acting = resolveActingUser(req, req.body.userId);
+  if (acting.error) {
+    return res
+      .status(acting.error.status)
+      .json({ success: false, message: acting.error.message });
+  }
+  const numUserId = acting.userId;
+
+  if (subjectId == null) {
     return res.status(400).json({
       success: false,
-      message: "userId and subjectId are required in the request body.",
+      message: "subjectId is required in the request body.",
     });
   }
 
-  const numUserId = parseInt(userId, 10);
   const numSubjectId = parseInt(subjectId, 10);
-
-  if (isNaN(numUserId) || isNaN(numSubjectId)) {
+  if (isNaN(numSubjectId)) {
     return res
       .status(400)
-      .json({ success: false, message: "Invalid userId or subjectId." });
+      .json({ success: false, message: "Invalid subjectId." });
   }
 
   const transaction = await sequelize.transaction();
@@ -150,20 +190,13 @@ export const unenrollUserFromSubject = async (req, res) => {
 };
 
 export const getUserEnrollments = async (req, res) => {
-  const { userId } = req.params;
-
-  if (!userId) {
-    return res.status(400).json({
-      success: false,
-      message: "User ID is required in the URL path.",
-    });
-  }
-  const numUserId = parseInt(userId, 10);
-  if (isNaN(numUserId)) {
+  const acting = resolveActingUser(req, req.params.userId);
+  if (acting.error) {
     return res
-      .status(400)
-      .json({ success: false, message: "Invalid User ID in URL." });
+      .status(acting.error.status)
+      .json({ success: false, message: acting.error.message });
   }
+  const numUserId = acting.userId;
 
   try {
     const user = await User.findByPk(numUserId, {

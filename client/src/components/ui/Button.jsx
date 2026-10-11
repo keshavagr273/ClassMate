@@ -9,15 +9,17 @@ import Spinner from "./Spinner";
  * from hairlines and the ink ramp, so the accent stays scarce.
  */
 const variants = {
-  primary: "bg-btn text-canvas hover:bg-btn-hover active:bg-btn-2",
-  secondary: "bg-btn-2 text-canvas hover:bg-btn-2-hover active:bg-btn-2",
+  primary:
+    "bg-btn text-canvas hover:bg-btn-hover hover:shadow-pop active:bg-btn-2",
+  secondary:
+    "bg-btn-2 text-canvas hover:bg-btn-2-hover hover:shadow-pop active:bg-btn-2",
   outline:
-    "border border-line-2 text-ink hover:border-line-3 hover:bg-surface-2 active:bg-surface-3",
+    "border border-line-2 text-ink-2 hover:border-line-3 hover:bg-surface-2 hover:text-ink active:bg-surface-3",
   subtle:
-    "border border-line bg-surface-2 text-ink hover:bg-surface-3 hover:border-line-2",
-  ghost: "text-ink-2 hover:text-ink hover:bg-surface-2",
-  danger: "bg-clay text-ink hover:bg-clay-soft active:bg-clay",
-  link: "text-ink underline decoration-line-3 decoration-1 underline-offset-4 hover:decoration-accent",
+    "border border-line bg-surface-2 text-ink-2 hover:bg-surface-3 hover:border-line-2 hover:text-ink",
+  ghost: "text-ink-3 hover:text-ink hover:bg-surface-2",
+  danger: "bg-clay text-ink hover:bg-clay-soft hover:shadow-pop active:bg-clay",
+  link: "text-ink-2 underline decoration-line-3 decoration-1 underline-offset-4 hover:text-ink hover:decoration-accent",
 };
 
 const sizes = {
@@ -54,7 +56,11 @@ const Button = React.forwardRef(function Button(
       aria-busy={loading || undefined}
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full font-medium whitespace-nowrap",
-        "transition-colors duration-150 ease-standard",
+        // A small lift on hover and a press on click, so every button
+        // acknowledges the pointer rather than only changing shade.
+        "cursor-pointer transition-all duration-150 ease-standard",
+        "hover:-translate-y-px active:translate-y-0 active:scale-[0.98]",
+        "disabled:transform-none disabled:hover:shadow-none",
         "disabled:cursor-not-allowed disabled:opacity-45",
         "aria-disabled:cursor-not-allowed aria-disabled:opacity-45",
         variants[variant] || variants.primary,

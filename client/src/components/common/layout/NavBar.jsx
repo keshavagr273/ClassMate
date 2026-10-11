@@ -9,6 +9,7 @@ import {
   markAllNotificationsAsRead,
 } from "../../../slices/notificationSlice";
 import { Badge, Eyebrow, IconButton, cn } from "../../ui";
+import CommandPalette from "./CommandPalette";
 
 const navLinks = [
   { name: "SkillSwap", path: "/skill-exchange" },
@@ -86,6 +87,7 @@ function NavBar() {
 
   const [isNotificationOpen, setNotificationOpen] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isPaletteOpen, setPaletteOpen] = useState(false);
   const notificationPanelRef = useRef(null);
 
   useEffect(() => {
@@ -103,6 +105,24 @@ function NavBar() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(
+        event.target?.tagName || ""
+      ) || event.target?.isContentEditable;
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      } else if (event.key === "/" && !typing) {
+        event.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   // Close the drawer on navigation, and lock scroll while it is open.
@@ -155,6 +175,8 @@ function NavBar() {
                 input carried a `form-input` class that resolved to nothing. */}
             <button
               type="button"
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Search ClassMate"
               className={cn(
                 "hidden items-center gap-2 rounded-full border border-line-2 bg-surface-2 py-1.5 pl-3 pr-2",
                 "text-meta text-ink-4 transition-colors duration-150 hover:border-line-3 hover:text-ink-2 sm:flex"
@@ -228,6 +250,14 @@ function NavBar() {
             )}
 
             <IconButton
+              icon={Search}
+              label="Search"
+              variant="subtle"
+              onClick={() => setPaletteOpen(true)}
+              className="sm:hidden"
+            />
+
+            <IconButton
               icon={isMenuOpen ? X : Menu}
               label={isMenuOpen ? "Close menu" : "Open menu"}
               onClick={() => setMenuOpen((prev) => !prev)}
@@ -236,6 +266,11 @@ function NavBar() {
           </div>
         </div>
       </header>
+
+      <CommandPalette
+        open={isPaletteOpen}
+        onClose={() => setPaletteOpen(false)}
+      />
 
       {/* Mobile drawer. There was no mobile menu at all before this. */}
       <AnimatePresence>

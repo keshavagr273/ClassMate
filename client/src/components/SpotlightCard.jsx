@@ -18,6 +18,11 @@ const SpotlightCard = ({ image, title, subtitle, description, link }) => (
         src={image}
         alt=""
         loading="lazy"
+        // decoding="async" keeps image decode off the critical path, so a
+        // large photo cannot stall the frame as the card scrolls in.
+        decoding="async"
+        width={720}
+        height={450}
         className="size-full object-cover transition-transform duration-500 ease-standard group-hover:scale-[1.03]"
       />
     </div>

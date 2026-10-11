@@ -52,6 +52,20 @@ const ctx = await browser.newContext({
   colorScheme: "dark",
 });
 
+/* Sign in once up front when credentials are supplied, so the seven protected
+   routes render their real content instead of bouncing to /login. */
+if (process.env.SHOOT_EMAIL && process.env.SHOOT_PASSWORD) {
+  const login = await ctx.newPage();
+  await login.goto(BASE + "/login", { waitUntil: "networkidle" });
+  await login.fill('input[name="email"]', process.env.SHOOT_EMAIL);
+  await login.fill('input[name="password"]', process.env.SHOOT_PASSWORD);
+  await login.click('button[type="submit"]');
+  await login.waitForTimeout(3500);
+  const signedIn = (await ctx.cookies()).some((c) => c.name === "token");
+  console.log(signedIn ? "signed in" : "SIGN-IN FAILED - protected routes will redirect");
+  await login.close();
+}
+
 let anyProblem = false;
 
 for (const route of targets) {
@@ -79,6 +93,22 @@ for (const route of targets) {
     });
     // Let the boot gate, fonts and any WebGL frame settle.
     await page.waitForTimeout(2500);
+
+    // Scroll the whole page before capturing. Sections reveal on scroll with
+    // framer-motion's whileInView, so without this a full-page shot catches
+    // everything below the fold still at opacity 0 — and, more usefully, this
+    // exercises the reveal the way a real visitor would.
+    await page.evaluate(async () => {
+      const step = window.innerHeight * 0.8;
+      for (let y = 0; y < document.body.scrollHeight; y += step) {
+        window.scrollTo({ top: y, behavior: "instant" });
+        await new Promise((r) => setTimeout(r, 120));
+      }
+      // The app sets scroll-behavior: smooth, so a plain scrollTo(0,0)
+      // animates and the capture lands mid-page. Force it instant.
+      window.scrollTo({ top: 0, behavior: "instant" });
+      await new Promise((r) => setTimeout(r, 600));
+    });
     await page.screenshot({ path: path.join(OUT, name), fullPage });
   } catch (err) {
     pageErrors.push(`NAVIGATION: ${err.message}`);

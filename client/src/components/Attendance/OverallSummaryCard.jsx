@@ -26,7 +26,11 @@ const OverallSummaryCard = ({
 
     {overallPercentageData ? (
       <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center">
-        <ProgressRing value={overallPercentageData.percentage} size={88} />
+        <ProgressRing
+          value={overallPercentageData.percentage}
+          size={88}
+          empty={!overallPercentageData.totalDays}
+        />
 
         <dl className="grid flex-1 grid-cols-3 gap-4 border-t border-line pt-4 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
           {[

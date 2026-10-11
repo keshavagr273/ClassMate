@@ -230,7 +230,16 @@ export const getAllBuyAndSellItems = asyncHandler(async (req, res) => {
 });
 
 export const getUserItems = asyncHandler(async (req, res) => {
-  const userId = req.params.userId || req.user?.id;
+  // `req.params.userId || req.user.id` let any authenticated user read another
+  // user's records — including the joined participant/seller contact details.
+  // The authenticated id wins; a supplied id is honoured only when it matches.
+  const userId = req.user?.id;
+  if (!userId) {
+    throw new ApiError("Authentication required", 401);
+  }
+  if (req.params.userId && String(req.params.userId) !== String(userId)) {
+    throw new ApiError("You can only view your own listings", 403);
+  }
 
   const items = await BuyAndSell.findAll({
     where: { userId },

@@ -44,8 +44,8 @@ const Footer = () => (
             ClassMate
           </p>
           <p className="mt-2 text-meta text-ink-3">
-            One login for campus life at IIIT Sonepat. Built by students, for
-            students.
+            One login for campus life at IIIT Sonepat. Built and maintained by
+            one student.
           </p>
         </div>
 
